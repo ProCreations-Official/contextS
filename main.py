@@ -183,17 +183,28 @@ async def get_smart_docs(
 ) -> str:
     f"""Get AI-enhanced documentation with targeted code examples.
     
+    For single library documentation, only use library_id and context.
+    For multi-library integration help, use extra_libraries when your project needs multiple libraries working together.
+    
     Args:
-        library_id: Context7-compatible library ID (e.g., 'vercel/next.js', 'mongodb/docs')
-        context: Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
-        topic: Optional topic to focus on (e.g., 'routing', 'authentication')
-        tokens: Maximum tokens to retrieve (default: 200000, capped at 200k)
-        version: Optional specific version (e.g., 'v14.3.0-canary.87')
+        library_id: Context7-compatible library ID for your primary/main library (e.g., 'vercel/next.js', 'mongodb/docs')
+        context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
+        topic: Optional topic to focus on (e.g., 'routing', 'authentication', 'setup')
+        tokens: Maximum tokens to retrieve per library (default: 200000, capped at 200k)
+        version: Optional specific version for the main library (e.g., 'v14.3.0-canary.87')
         model: {generate_model_description()}
-        extra_libraries: Optional list of up to 2 additional library IDs for integration examples
+        extra_libraries: ONLY use when you need help integrating MULTIPLE libraries together. List of up to 2 additional library IDs. Example: if building a Next.js app with Supabase auth and Tailwind styling, use library_id="vercel/next.js" and extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"]
     
     Returns:
-        AI-enhanced documentation with practical code examples tailored to your needs
+        AI-enhanced documentation with practical code examples. If extra_libraries provided, includes integration patterns showing how the libraries work together.
+    
+    Examples:
+        # Single library - just learning Next.js routing
+        get_smart_docs("vercel/next.js", "learning dynamic routing for blog posts")
+        
+        # Multi-library - building full-stack app with multiple technologies
+        get_smart_docs("vercel/next.js", "building e-commerce site with auth and payments", 
+                      extra_libraries=["supabase/supabase", "stripe/stripe-js"])
     """
     if not library_id:
         return "Error: library_id parameter is required"

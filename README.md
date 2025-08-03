@@ -161,28 +161,36 @@ resolve_library_id(query="next.js")
 
 ### 2. `get_smart_docs` - Get AI-Enhanced Documentation
 
-Get smart documentation with practical examples:
+**For most use cases, you only need `library_id` and `context`:**
 
 ```
 get_smart_docs(
     library_id="vercel/next.js",
-    context="building a blog with dynamic routes using Next.js 14, need comprehensive examples with file-based routing, dynamic segments, and SEO optimization",
-    topic="routing",
-    model="gemini-2.5-flash"
+    context="building a blog with dynamic routes using Next.js 14, need comprehensive examples with file-based routing, dynamic segments, and SEO optimization"
+)
+```
+
+**Use `extra_libraries` ONLY when your project requires multiple libraries working together:**
+
+```
+get_smart_docs(
+    library_id="vercel/next.js",
+    context="building a full-stack e-commerce site with Next.js frontend, Supabase for auth/database, and Stripe for payments - need integration examples",
+    extra_libraries=["supabase/supabase", "stripe/stripe-js"]
 )
 ```
 
 **Parameters**:
-- `library_id` (required): Context7-compatible library ID
-- `context` (required): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
+- `library_id` (required): Context7-compatible library ID for your main/primary library
+- `context` (required): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs
 - `topic` (optional): Focus area (e.g., "routing", "authentication")
-- `tokens` (optional): Max tokens to retrieve (default: 200,000)
-- `version` (optional): Specific version (e.g., "v14.3.0-canary.87")
+- `tokens` (optional): Max tokens to retrieve per library (default: 200,000)
+- `version` (optional): Specific version for main library (e.g., "v14.3.0-canary.87")
 - `model` (optional): AI model to use for enhancement. Options:
   - **Gemini Models**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
   - **OpenAI Models**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
   - If not specified, uses intelligent fallback (Gemini 2.5 Flash → GPT-4.1)
-- `extra_libraries` (optional): List of up to 2 additional library IDs for integration examples
+- `extra_libraries` (optional): **ONLY use when you need help with multiple libraries together.** List of up to 2 additional library IDs. Don't use this for single library questions.
 
 ## Example Workflows
 
@@ -230,18 +238,26 @@ get_smart_docs(
 )
 ```
 
-### Advanced: Multi-Library Integration
+### When to Use Multi-Library Integration
 
-For complex projects requiring integration between multiple libraries, you can optionally include additional libraries:
+**Use `extra_libraries` only when you need help integrating multiple technologies together in one project.**
+
+**❌ Don't use extra_libraries for:**
+- Learning just one library (use single library approach)
+- Comparing different options (ask separate questions)
+- General research
+
+**✅ Do use extra_libraries when:**
+- Building full-stack applications with multiple technologies
+- Need specific integration patterns between libraries
+- Want to see how libraries work together in practice
 
 ```
-# Advanced: Get integration patterns for multiple libraries
+# Perfect example: Building an app that uses multiple libraries together
 get_smart_docs(
     library_id="vercel/next.js",
-    context="building a complete e-commerce application with Next.js frontend, Supabase backend and auth, and Tailwind for styling",
-    topic="full-stack development",
-    extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"],
-    model="gemini-2.5-flash"
+    context="building a complete e-commerce application with Next.js frontend, Supabase backend and auth, and Tailwind for styling - need integration examples showing how these work together",
+    extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"]
 )
 ```
 
