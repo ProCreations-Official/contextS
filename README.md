@@ -18,7 +18,6 @@
 - MCP-compatible client (Claude Desktop, Cursor, etc.)
 
 > **Note**: Currently, ContextS uses Google Gemini as the AI provider. While Gemini is the only supported AI model for now, we will be adding support for more AI providers very soon!
-
 ## 🛠️ Installation
 
 ### Step 1: Clone and Setup
