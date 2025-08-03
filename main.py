@@ -6,21 +6,37 @@ A smart version of Context7 that enhances documentation with AI-powered code exa
 
 import logging
 import os
-from typing import Optional
+from typing import Optional, Literal
 
 import httpx
 import google.generativeai as genai
 from mcp.server.fastmcp import FastMCP
 
+# Try to import OpenAI (optional dependency)
+try:
+    from openai import AsyncOpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Gemini AI (required)
+# Initialize AI services (at least one is required)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY environment variable is required for ContextS to function.")
-genai.configure(api_key=GEMINI_API_KEY)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Configure Gemini if available
+GEMINI_AVAILABLE = bool(GEMINI_API_KEY)
+if GEMINI_AVAILABLE:
+    genai.configure(api_key=GEMINI_API_KEY)
+
+# Validate that at least one AI service is configured
+if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY)):
+    raise ValueError(
+        "At least one AI service must be configured. Set GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
+    )
     
 # Context7 API base URL
 CONTEXT7_BASE_URL = "https://context7.com/api/v1"
@@ -92,7 +108,15 @@ async def get_smart_docs(
     topic: Optional[str] = None,
     tokens: int = 200000,
     version: Optional[str] = None,
-    context: Optional[str] = None
+    context: Optional[str] = None,
+    model: Optional[Literal[
+        "gemini-2.5-pro",      # Slowest, highest quality (if Gemini configured)
+        "gemini-2.5-flash",    # Default for Gemini, good balance (if Gemini configured)
+        "gemini-2.5-flash-lite", # Fastest, worst quality (if Gemini configured)
+        "gpt-4.1",             # Slowest, highest quality (if OpenAI configured)
+        "gpt-4.1-mini",        # Balance of speed and quality (if OpenAI configured)
+        "gpt-4.1-nano"         # Fastest, worst quality (if OpenAI configured)
+    ]] = None
 ) -> str:
     """Get AI-enhanced documentation with targeted code examples.
     
@@ -102,6 +126,14 @@ async def get_smart_docs(
         tokens: Maximum tokens to retrieve (default: 200000)
         version: Optional specific version (e.g., 'v14.3.0-canary.87')
         context: Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
+        model: Optional AI model to use. Options include:
+               - "gemini-2.5-pro": Slowest, highest quality (requires GEMINI_API_KEY)
+               - "gemini-2.5-flash": Default for Gemini, good balance (requires GEMINI_API_KEY)
+               - "gemini-2.5-flash-lite": Fastest, worst quality (requires GEMINI_API_KEY)
+               - "gpt-4.1": Slowest, highest quality (requires OPENAI_API_KEY)
+               - "gpt-4.1-mini": Balance of speed and quality (requires OPENAI_API_KEY)
+               - "gpt-4.1-nano": Fastest, worst quality (requires OPENAI_API_KEY)
+               If not specified, will use "gemini-2.5-flash" if Gemini is configured, otherwise "gpt-4.1".
     
     Returns:
         AI-enhanced documentation with practical code examples
@@ -138,8 +170,8 @@ async def get_smart_docs(
             
             raw_docs = response.text
             
-        # Enhance with Gemini AI (required)
-        enhanced_docs = await enhance_with_ai(raw_docs, library_id, topic, context or "")
+        # Enhance with AI (Gemini or OpenAI based on availability and model selection)
+        enhanced_docs = await enhance_with_ai(raw_docs, library_id, topic, context or "", model)
         return enhanced_docs
         
     except httpx.HTTPStatusError as e:
@@ -150,21 +182,17 @@ async def get_smart_docs(
     except Exception as e:
         return f"Error: {str(e)}"
 
-async def enhance_with_ai(docs: str, library_id: str, topic: Optional[str], context: str) -> str:
+async def enhance_with_ai(docs: str, library_id: str, topic: Optional[str], context: str, selected_model: Optional[str] = None) -> str:
     """Enhance documentation with AI-powered insights and code examples."""
+    
+    # Determine which model to use based on availability and preference
+    model_to_use = await _determine_ai_model(selected_model)
+    
+    if not model_to_use:
+        return f"# Documentation for {library_id}\n\n{docs}\n\n*No AI service available. Please configure GEMINI_API_KEY or OPENAI_API_KEY.*"
+    
     try:
-        # Configure Gemini model
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
-            generation_config={
-                "temperature": 0.3,
-                "top_p": 0.8,
-                "top_k": 40,
-                "max_output_tokens": 8192,
-            }
-        )
-        
-        # Create enhancement prompt
+        # Create enhancement prompt (same for both AI services)
         prompt = f"""You are ContextS, an expert technical documentation assistant specializing in creating comprehensive, in-depth code documentation with extensive explanations. Your mission is to transform raw documentation into detailed, educational resources that teach developers not just HOW to use the code, but WHY it works and WHAT to do with it.
 
 **Library:** {library_id}
@@ -230,18 +258,107 @@ Create an exhaustive, educational guide that provides DEEP context and EXTENSIVE
 
 Create documentation that teaches developers to become experts, not just users."""
 
-        # Generate enhanced documentation
-        import asyncio
-        response = await asyncio.to_thread(model.generate_content, prompt)
-        
-        if response and response.text:
-            return response.text
+        # Generate enhanced documentation based on selected model
+        if model_to_use.startswith("gemini"):
+            return await _enhance_with_gemini(prompt, model_to_use, library_id, docs)
+        elif model_to_use.startswith("gpt"):
+            return await _enhance_with_openai(prompt, model_to_use, library_id, docs)
         else:
-            return f"# Documentation for {library_id}\n\n{docs}\n\n*AI enhancement unavailable at the moment.*"
+            return f"# Documentation for {library_id}\n\n{docs}\n\n*Unsupported model: {model_to_use}*"
             
     except Exception as e:
         logger.error(f"AI enhancement failed: {e}")
         return f"# Documentation for {library_id}\n\n{docs}\n\n*AI enhancement failed: {str(e)}*"
+
+
+async def _determine_ai_model(requested_model: Optional[str]) -> Optional[str]:
+    """Determine which AI model to use based on availability and request."""
+    
+    # If a specific model is requested, validate it's available
+    if requested_model:
+        if requested_model.startswith("gemini") and not GEMINI_AVAILABLE:
+            logger.warning(f"Requested Gemini model '{requested_model}' but GEMINI_API_KEY not configured")
+            # Fall back to OpenAI if available
+            if OPENAI_AVAILABLE and OPENAI_API_KEY:
+                return "gpt-4.1"
+            return None
+        elif requested_model.startswith("gpt") and not (OPENAI_AVAILABLE and OPENAI_API_KEY):
+            logger.warning(f"Requested OpenAI model '{requested_model}' but OpenAI not available")
+            # Fall back to Gemini if available
+            if GEMINI_AVAILABLE:
+                return "gemini-2.5-flash"
+            return None
+        else:
+            # Requested model is available
+            return requested_model
+    
+    # No specific model requested, use default priority: Gemini first, then OpenAI
+    if GEMINI_AVAILABLE:
+        return "gemini-2.5-flash"
+    elif OPENAI_AVAILABLE and OPENAI_API_KEY:
+        return "gpt-4.1"
+    
+    return None
+
+
+async def _enhance_with_gemini(prompt: str, model_name: str, library_id: str, docs: str) -> str:
+    """Enhance documentation using Google Gemini."""
+    try:
+        # Configure Gemini model
+        gemini_model = genai.GenerativeModel(
+            model_name=model_name,
+            generation_config={
+                "temperature": 0.3,
+                "top_p": 0.8,
+                "top_k": 40,
+                "max_output_tokens": 8192,
+            }
+        )
+        
+        # Generate enhanced documentation
+        import asyncio
+        response = await asyncio.to_thread(gemini_model.generate_content, prompt)
+        
+        if response and response.text:
+            return response.text
+        else:
+            return f"# Documentation for {library_id}\n\n{docs}\n\n*Gemini AI enhancement unavailable at the moment.*"
+            
+    except Exception as e:
+        logger.error(f"Gemini enhancement failed: {e}")
+        raise
+
+
+async def _enhance_with_openai(prompt: str, model_name: str, library_id: str, docs: str) -> str:
+    """Enhance documentation using OpenAI."""
+    try:
+        # Create async OpenAI client
+        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+        
+        # Use the exact model names as they exist in the OpenAI API
+        actual_model = model_name
+        
+        # Generate enhanced documentation
+        response = await client.chat.completions.create(
+            model=actual_model,
+            messages=[
+                {"role": "system", "content": "You are ContextS, an expert technical documentation assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            max_tokens=8192,
+        )
+        
+        await client.close()
+        
+        if response and response.choices and response.choices[0].message:
+            return response.choices[0].message.content
+        else:
+            return f"# Documentation for {library_id}\n\n{docs}\n\n*OpenAI enhancement unavailable at the moment.*"
+            
+    except Exception as e:
+        logger.error(f"OpenAI enhancement failed: {e}")
+        raise
 
 
 def main():
