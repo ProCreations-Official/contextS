@@ -1,6 +1,7 @@
 <div align="center">
+  
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=4000&pause=1000&color=6366F1&center=true&vCenter=true&width=600&lines=Context+smart.+Let+AI+experts+help+your+AI." alt="Typing SVG" />
 
-![ContextS Animation](typing-animation.html)
 
 # ContextS - Smart Documentation MCP Server
 
