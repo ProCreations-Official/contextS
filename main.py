@@ -178,23 +178,37 @@ async def get_smart_docs(
     tokens: int = 200000,
     version: Optional[str] = None,
     context: Optional[str] = None,
-    model: Optional[str] = None
+    model: Optional[str] = None,
+    extra_libraries: Optional[list[str]] = None
 ) -> str:
-    f"""Get AI-enhanced documentation with targeted code examples.
+    f"""Get AI-enhanced documentation with targeted code examples from multiple libraries.
     
     Args:
-        library_id: Context7-compatible library ID (e.g., 'vercel/next.js', 'mongodb/docs')
+        library_id: Context7-compatible library ID (e.g., 'vercel/next.js', 'mongodb/docs') - this will be the primary library
         topic: Optional topic to focus on (e.g., 'routing', 'authentication')
-        tokens: Maximum tokens to retrieve (default: 200000)
-        version: Optional specific version (e.g., 'v14.3.0-canary.87')
+        tokens: Maximum tokens to retrieve per library (default: 200000, capped at 200k)
+        version: Optional specific version for the primary library (e.g., 'v14.3.0-canary.87')
         context: Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
         model: {generate_model_description()}
+        extra_libraries: Optional list of up to 2 additional library IDs to include code examples from. Each library will be fetched with the same token limit. Useful for getting integration examples between multiple libraries.
     
     Returns:
-        AI-enhanced documentation with practical code examples
+        AI-enhanced documentation with practical code examples from the primary library and additional libraries, showing how they work together
     """
     if not library_id:
         return "Error: library_id parameter is required"
+    
+    # Validate extra_libraries parameter
+    if extra_libraries is not None:
+        if not isinstance(extra_libraries, list):
+            return "Error: extra_libraries must be a list of library IDs"
+        if len(extra_libraries) > 2:
+            return "Error: maximum 2 extra libraries allowed"
+        if len(extra_libraries) == 0:
+            return "Error: extra_libraries cannot be empty if provided"
+        for lib in extra_libraries:
+            if not isinstance(lib, str) or not lib.strip():
+                return "Error: each extra library must be a non-empty string"
     
     # Validate requested model is available
     if model:
@@ -217,6 +231,38 @@ async def get_smart_docs(
             else:
                 return f"Error: Unknown model '{model}'. Available models: {', '.join(available_models)}."
     
+    try:
+        # Fetch documentation for main library
+        main_docs, main_error = await _fetch_library_docs(library_id, topic, tokens, version)
+        if main_error:
+            return main_error
+        
+        # Build docs dictionary starting with main library
+        all_docs = {library_id: main_docs}
+        
+        # Fetch documentation for extra libraries if provided
+        if extra_libraries:
+            for extra_lib in extra_libraries:
+                extra_docs, extra_error = await _fetch_library_docs(extra_lib, topic, tokens, None)  # No version for extra libs
+                if extra_error:
+                    # Include partial results with error message
+                    all_docs[extra_lib] = f"[ERROR: {extra_error}]"
+                else:
+                    all_docs[extra_lib] = extra_docs
+        
+        # Enhance with AI (Gemini or OpenAI based on availability and model selection)
+        enhanced_docs = await enhance_with_ai(all_docs, library_id, topic, context or "", model)
+        return enhanced_docs
+        
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+async def _fetch_library_docs(library_id: str, topic: Optional[str], tokens: int, version: Optional[str]) -> tuple[str, str]:
+    """Fetch documentation for a single library from Context7.
+    
+    Returns:
+        Tuple of (docs_content, error_message). If error_message is not None, docs_content will be empty.
+    """
     try:
         # Construct Context7 URL
         url_path = library_id.lstrip('/')  # Remove leading slash if present
@@ -244,39 +290,125 @@ async def get_smart_docs(
             response = await client.get(url, params=params, headers=headers, timeout=60.0)
             response.raise_for_status()
             
-            raw_docs = response.text
+            return response.text, None
             
-        # Enhance with AI (Gemini or OpenAI based on availability and model selection)
-        enhanced_docs = await enhance_with_ai(raw_docs, library_id, topic, context or "", model)
-        return enhanced_docs
-        
     except httpx.HTTPStatusError as e:
-        error_msg = f"Error fetching docs: HTTP {e.response.status_code}"
+        error_msg = f"Error fetching docs for '{library_id}': HTTP {e.response.status_code}"
         if e.response.status_code == 404:
-            error_msg += f"\n\nLibrary '{library_id}' not found. Use resolve_library_id to search for the correct ID."
-        return error_msg
+            error_msg += f". Library '{library_id}' not found. Use resolve_library_id to search for the correct ID."
+        return "", error_msg
     except Exception as e:
-        return f"Error: {str(e)}"
+        return "", f"Error fetching docs for '{library_id}': {str(e)}"
 
-async def enhance_with_ai(docs: str, library_id: str, topic: Optional[str], context: str, selected_model: Optional[str] = None) -> str:
+async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, topic: Optional[str], context: str, selected_model: Optional[str] = None) -> str:
     """Enhance documentation with AI-powered insights and code examples."""
     
     # Determine which model to use based on availability and preference
     model_to_use, error_message = await _determine_ai_model(selected_model)
     
     if error_message:
-        return f"# Documentation for {library_id}\n\n{docs}\n\n*{error_message}*"
+        main_docs = docs_dict.get(main_library_id, "")
+        return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*{error_message}*"
     
     try:
-        # Create enhancement prompt (same for both AI services)
-        prompt = f"""You are ContextS, an expert technical documentation assistant specializing in creating comprehensive, in-depth code documentation with extensive explanations. Your mission is to transform raw documentation into detailed, educational resources that teach developers not just HOW to use the code, but WHY it works and WHAT to do with it.
+        # Create enhancement prompt for multiple libraries
+        libraries_list = list(docs_dict.keys())
+        main_docs = docs_dict.get(main_library_id, "")
+        
+        docs_sections = []
+        for lib_id, lib_docs in docs_dict.items():
+            if lib_id == main_library_id:
+                docs_sections.append(f"## PRIMARY LIBRARY: {lib_id}\n{lib_docs}")
+            else:
+                docs_sections.append(f"## ADDITIONAL LIBRARY: {lib_id}\n{lib_docs}")
+        
+        all_docs_text = "\n\n".join(docs_sections)
+        
+        # Create appropriate prompt based on number of libraries
+        has_multiple_libraries = len(libraries_list) > 1
+        
+        if has_multiple_libraries:
+            # Multi-library prompt
+            additional_libs = [lib for lib in libraries_list if lib != main_library_id]
+            prompt = f"""You are ContextS, an expert technical documentation assistant specializing in creating comprehensive, in-depth code documentation with extensive explanations. Your mission is to transform raw documentation from multiple libraries into detailed, educational resources that teach developers not just HOW to use the code, but WHY it works and WHAT to do with it.
 
-**Library:** {library_id}
+**Primary Library:** {main_library_id}
+**Additional Libraries:** {', '.join(additional_libs)}
+**Topic:** {topic or "comprehensive coverage"}
+**Developer Context:** {context or "comprehensive development guidance needed"}
+
+**Raw Documentation from Multiple Libraries:**
+{all_docs_text}
+
+**Your Enhancement Mission:**
+Create an exhaustive, educational guide that provides DEEP context and EXTENSIVE explanations. Focus primarily on {main_library_id} but show how it integrates with the additional libraries. For every code example, explain:
+
+1. **What the code does** - Line-by-line explanations when needed
+2. **Why it's structured this way** - Design patterns and architectural decisions
+3. **How to implement it** - Complete, production-ready examples with full context
+4. **How libraries work together** - Integration patterns and best practices
+5. **What to watch out for** - Common pitfalls, edge cases, and debugging tips
+6. **How to extend it** - Ways to modify and adapt the code for different scenarios
+7. **When to use it** - Appropriate use cases and alternatives
+
+**Required Response Structure:**
+# Complete ContextS Multi-Library Documentation
+
+## Comprehensive Overview
+[Detailed explanation of the primary library and how it works with additional libraries, core philosophy, and when/why to use this combination]
+
+## Essential Concepts Deep Dive
+[In-depth explanation of fundamental concepts across all libraries with detailed examples and reasoning]
+
+## Step-by-Step Implementation Guide
+[Complete walkthrough with extensive code examples showing library integration, each with detailed explanations of:
+- What each line does
+- Why it's necessary
+- How it fits into the bigger picture
+- How libraries complement each other
+- Alternative approaches and their trade-offs]
+
+## Advanced Usage Patterns
+[Complex real-world scenarios with comprehensive code examples showing multi-library integration and thorough explanations]
+
+## Production-Ready Examples
+[Complete, deployable code examples with:
+- Full error handling
+- Best practices implementation
+- Performance considerations
+- Security considerations
+- Testing approaches
+- Multi-library coordination]
+
+## Implementation Strategies
+[Detailed guidance on how to structure projects, organize code, and integrate multiple libraries effectively]
+
+## Troubleshooting & Debugging
+[Comprehensive troubleshooting guide with common issues across all libraries, their causes, and detailed solutions]
+
+## Enhanced Complete Reference
+[Reorganized and enhanced version of the original documentation with additional context and cross-library examples]
+
+**Quality Standards:**
+- Provide EXTENSIVE explanations for all code examples
+- Include complete, working code that can be copy-pasted and used
+- Explain the reasoning behind architectural decisions
+- Cover edge cases and error scenarios
+- Show how libraries work together effectively
+- Provide multiple approaches when applicable
+- Make it educational and comprehensive, not just functional
+
+Create documentation that teaches developers to become experts with multiple libraries, not just users."""
+        else:
+            # Single library prompt (original style with fewer emojis)
+            prompt = f"""You are ContextS, an expert technical documentation assistant specializing in creating comprehensive, in-depth code documentation with extensive explanations. Your mission is to transform raw documentation into detailed, educational resources that teach developers not just HOW to use the code, but WHY it works and WHAT to do with it.
+
+**Library:** {main_library_id}
 **Topic:** {topic or "comprehensive coverage"}
 **Developer Context:** {context or "comprehensive development guidance needed"}
 
 **Raw Documentation:**
-{docs}
+{all_docs_text}
 
 **Your Enhancement Mission:**
 Create an exhaustive, educational guide that provides DEEP context and EXTENSIVE explanations. For every code example, explain:
@@ -289,25 +421,25 @@ Create an exhaustive, educational guide that provides DEEP context and EXTENSIVE
 6. **When to use it** - Appropriate use cases and alternatives
 
 **Required Response Structure:**
-# Complete ContextS Documentation for {library_id}
+# Complete ContextS Documentation for {main_library_id}
 
-## 📋 Comprehensive Overview
+## Comprehensive Overview
 [Detailed explanation of what this library does, its core philosophy, and when/why to use it]
 
-## 🚀 Essential Concepts Deep Dive
+## Essential Concepts Deep Dive
 [In-depth explanation of fundamental concepts with detailed examples and reasoning]
 
-## 💡 Step-by-Step Implementation Guide
+## Step-by-Step Implementation Guide
 [Complete walkthrough with extensive code examples, each with detailed explanations of:
 - What each line does
 - Why it's necessary
 - How it fits into the bigger picture
 - Alternative approaches and their trade-offs]
 
-## 🔧 Advanced Usage Patterns
+## Advanced Usage Patterns
 [Complex real-world scenarios with comprehensive code examples and thorough explanations]
 
-## ⚡ Production-Ready Examples
+## Production-Ready Examples
 [Complete, deployable code examples with:
 - Full error handling
 - Best practices implementation
@@ -315,13 +447,13 @@ Create an exhaustive, educational guide that provides DEEP context and EXTENSIVE
 - Security considerations
 - Testing approaches]
 
-## 🛠️ Implementation Strategies
+## Implementation Strategies
 [Detailed guidance on how to structure projects, organize code, and integrate with other tools]
 
-## 🔍 Troubleshooting & Debugging
+## Troubleshooting & Debugging
 [Comprehensive troubleshooting guide with common issues, their causes, and detailed solutions]
 
-## 📚 Enhanced Complete Reference
+## Enhanced Complete Reference
 [Reorganized and enhanced version of the original documentation with additional context and examples]
 
 **Quality Standards:**
@@ -336,15 +468,15 @@ Create documentation that teaches developers to become experts, not just users."
 
         # Generate enhanced documentation based on selected model
         if model_to_use.startswith("gemini"):
-            return await _enhance_with_gemini(prompt, model_to_use, library_id, docs)
+            return await _enhance_with_gemini(prompt, model_to_use, main_library_id, main_docs)
         elif model_to_use.startswith("gpt"):
-            return await _enhance_with_openai(prompt, model_to_use, library_id, docs)
+            return await _enhance_with_openai(prompt, model_to_use, main_library_id, main_docs)
         else:
-            return f"# Documentation for {library_id}\n\n{docs}\n\n*Unsupported model: {model_to_use}*"
+            return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*Unsupported model: {model_to_use}*"
             
     except Exception as e:
         logger.error(f"AI enhancement failed: {e}")
-        return f"# Documentation for {library_id}\n\n{docs}\n\n*AI enhancement failed: {str(e)}*"
+        return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*AI enhancement failed: {str(e)}*"
 
 
 async def _determine_ai_model(requested_model: Optional[str]) -> tuple[Optional[str], Optional[str]]:

@@ -1,10 +1,19 @@
+<div align="center">
+
+![ContextS Animation](typing-animation.html)
+
 # ContextS - Smart Documentation MCP Server
 
-**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance. The "S" stands for **Smart** - it supports both Google Gemini and OpenAI models to provide targeted, practical documentation with working code examples.
+*An AI to help your AI*
 
-## 🚀 Features
+</div>
 
-- **Smart Documentation**: AI-enhanced docs with practical code examples
+**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance from multiple libraries simultaneously. The "S" stands for **Smart** - it supports both Google Gemini and OpenAI models to provide targeted, practical documentation with working code examples and cross-library integration patterns.
+
+## Features
+
+- **Multi-Library Integration**: Get documentation from up to 3 libraries simultaneously with the new `extra_libraries` parameter
+- **Smart Documentation**: AI-enhanced docs with practical code examples and cross-library integration patterns
 - **Dual AI Support**: Choose between Google Gemini and OpenAI models
 - **Intelligent Fallback**: Automatically switches between AI providers
 - **Model Selection**: Pick the right model for speed vs quality tradeoffs
@@ -14,7 +23,7 @@
 - **Up-to-Date Content**: Powered by Context7's real-time documentation database
 - **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients
 
-## 📋 Requirements
+## Requirements
 
 - Python 3.8+
 - At least one AI API key (Gemini and/or OpenAI)
@@ -35,7 +44,7 @@ ContextS supports both **Google Gemini** and **OpenAI** models:
 - `gpt-4.1-nano` - Fastest, lower quality
 
 **Intelligent Fallback**: If both APIs are configured, ContextS defaults to Gemini 2.5 Flash, then falls back to GPT-4.1 if needed.
-## 🛠️ Installation
+## Installation
 
 ### Step 1: Clone and Setup
 
@@ -135,7 +144,7 @@ Follow your client's MCP server configuration documentation, using:
 
 **Note**: You only need to include the API keys you have. If you only have Gemini, just include `GEMINI_API_KEY`. If you only have OpenAI, just include `OPENAI_API_KEY`.
 
-## 🎯 Usage
+## Usage
 
 ContextS provides two main tools:
 
@@ -149,31 +158,42 @@ resolve_library_id(query="next.js")
 
 **Returns**: A list of matching libraries with their Context7-compatible IDs.
 
-### 2. `get_smart_docs` - Get AI-Enhanced Documentation
+### 2. `get_smart_docs` - Get AI-Enhanced Documentation with Multi-Library Support
 
-Get smart documentation with practical examples:
+Get smart documentation with practical examples from multiple libraries:
 
 ```
+# Single library example
 get_smart_docs(
     library_id="vercel/next.js",
     topic="routing", 
     context="building a blog with dynamic routes using Next.js 14, need comprehensive examples with file-based routing, dynamic segments, and SEO optimization",
     model="gemini-2.5-flash"
 )
+
+# Multi-library integration example
+get_smart_docs(
+    library_id="vercel/next.js",
+    extra_libraries=["supabase/supabase", "mongodb/docs"],
+    topic="authentication",
+    context="building a full-stack Next.js application with Supabase auth and MongoDB database integration",
+    model="gemini-2.5-flash"
+)
 ```
 
 **Parameters**:
-- `library_id` (required): Context7-compatible library ID
+- `library_id` (required): Context7-compatible library ID for the primary library
+- `extra_libraries` (optional): List of up to 2 additional library IDs for integration examples
 - `topic` (optional): Focus area (e.g., "routing", "authentication")
-- `tokens` (optional): Max tokens to retrieve (default: 200,000)
-- `version` (optional): Specific version (e.g., "v14.3.0-canary.87")
+- `tokens` (optional): Max tokens to retrieve per library (default: 200,000)
+- `version` (optional): Specific version for primary library (e.g., "v14.3.0-canary.87")
 - `context` (optional): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
 - `model` (optional): AI model to use for enhancement. Options:
   - **Gemini Models**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
   - **OpenAI Models**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
   - If not specified, uses intelligent fallback (Gemini 2.5 Flash → GPT-4.1)
 
-## 💡 Example Workflows
+## Example Workflows
 
 ### 1. Find and Learn Next.js Routing
 
@@ -219,7 +239,20 @@ get_smart_docs(
 )
 ```
 
-## 🔧 Configuration
+### 4. Multi-Library Full-Stack Integration
+
+```
+# Get documentation showing how Next.js, Supabase, and Tailwind CSS work together
+get_smart_docs(
+    library_id="vercel/next.js",
+    extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"],
+    topic="full-stack development",
+    context="building a complete e-commerce application with Next.js frontend, Supabase backend and auth, and Tailwind for styling. Need patterns for data fetching, authentication flows, and responsive design",
+    model="gemini-2.5-flash"
+)
+```
+
+## Configuration
 
 ### Environment Variables
 
@@ -246,7 +279,7 @@ You can modify `main.py` to:
 - Add custom processing logic
 - Configure model-specific settings
 
-## 🤖 How the AI Enhancement Works
+## How the AI Enhancement Works
 
 When you request documentation, ContextS:
 
@@ -264,7 +297,7 @@ The AI enhancement includes:
 - Best practices and tips
 - Complete enhanced documentation
 
-## 📚 API Reference
+## API Reference
 
 ### Context7 Endpoints Used
 
@@ -281,7 +314,7 @@ Examples:
 - `supabase/supabase`
 - `vercel/next.js/v14.3.0-canary.87`
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -311,7 +344,7 @@ To enable debug logging, modify the logging level in `main.py`:
 logging.basicConfig(level=logging.DEBUG)
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Areas for improvement:
 
@@ -321,16 +354,17 @@ Contributions are welcome! Areas for improvement:
 - Custom prompt templates
 - Integration with more documentation sources
 
-## 📄 License
+## License
 
 MIT License - feel free to use and modify as needed.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Context7** for providing the excellent documentation API
 - **Google Gemini** for powerful AI capabilities
+- **OpenAI** for advanced language model capabilities
 - **MCP** for the Model Context Protocol standard
 
 ---
 
-**ContextS** - Making documentation smarter, one query at a time! 🧠✨
+**ContextS** - An AI to help your AI. Making documentation smarter, one query at a time.
