@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wonderful Hello World</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Custom Animations -->
+    <style>
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-10px);
+        }
+        60% {
+          transform: translateY(-5px);
+        }
+      }
+      
+      @keyframes rainbow {
+        0% { color: #ff0000; }
+        16% { color: #ff8000; }
+        33% { color: #ffff00; }
+        50% { color: #00ff00; }
+        66% { color: #0080ff; }
+        83% { color: #8000ff; }
+        100% { color: #ff0000; }
+      }
+      
+      .fade-in-up {
+        animation: fadeInUp 1s ease-out;
+      }
+      
+      .bounce-animation {
+        animation: bounce 2s infinite;
+      }
+      
+      .rainbow-text {
+        animation: rainbow 3s linear infinite;
+        font-weight: bold;
+      }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      
+      .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      }
+      
+      .floating {
+        animation: floating 3s ease-in-out infinite;
+      }
+      
+      @keyframes floating {
+        0% { transform: translate(0, 0px); }
+        50% { transform: translate(0, -10px); }
+        100% { transform: translate(0, 0px); }
+      }
+      
+      .pulse-btn {
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+        }
+        70% {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+        }
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+        }
+      }
+    </style>
+  </head>
+  <body class="gradient-bg">
+    <div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
+      <div class="row justify-content-center w-100">
+        <div class="col-lg-8 col-xl-6">
+          <div class="glass-card p-5 text-center fade-in-up">
+            <!-- Main Heading -->
+            <div class="mb-4">
+              <i class="bi bi-heart-fill rainbow-text bounce-animation" style="font-size: 3rem;"></i>
+            </div>
+            
+            <h1 class="display-4 fw-bold text-white mb-4 floating">
+              Hello, <span class="rainbow-text">Wonderful</span> World!
+            </h1>
+            
+            <p class="lead text-white-50 mb-4">
+              Welcome to your amazing Bootstrap-powered Hello World application! 
+              This is a beautiful, responsive, and animated greeting just for you.
+            </p>
+            
+            <!-- Feature Cards -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <div class="card bg-transparent border-light text-white h-100">
+                  <div class="card-body">
+                    <i class="bi bi-bootstrap-fill text-primary" style="font-size: 2rem;"></i>
+                    <h6 class="card-title mt-2">Bootstrap 5</h6>
+                    <p class="card-text small">Modern responsive framework</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-transparent border-light text-white h-100">
+                  <div class="card-body">
+                    <i class="bi bi-palette-fill text-warning" style="font-size: 2rem;"></i>
+                    <h6 class="card-title mt-2">CSS Animations</h6>
+                    <p class="card-text small">Beautiful visual effects</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-transparent border-light text-white h-100">
+                  <div class="card-body">
+                    <i class="bi bi-device-ssd-fill text-success" style="font-size: 2rem;"></i>
+                    <h6 class="card-title mt-2">Responsive</h6>
+                    <p class="card-text small">Works on all devices</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Interactive Buttons -->
+            <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+              <button class="btn btn-primary btn-lg pulse-btn" onclick="showAlert()">
+                <i class="bi bi-star-fill me-2"></i>Say Hello!
+              </button>
+              <button class="btn btn-outline-light btn-lg" onclick="changeBackground()">
+                <i class="bi bi-palette me-2"></i>Change Theme
+              </button>
+              <button class="btn btn-success btn-lg" onclick="addSparkles()">
+                <i class="bi bi-magic me-2"></i>Add Magic
+              </button>
+            </div>
+            
+            <!-- Footer -->
+            <div class="text-white-50 small">
+              <p class="mb-2">
+                <i class="bi bi-code-slash me-1"></i>
+                Built with love using Bootstrap, CSS animations, and JavaScript
+              </p>
+              <p class="mb-0">
+                <i class="bi bi-heart-fill text-danger me-1"></i>
+                Made with ContextS for library discovery
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sparkles Container -->
+    <div id="sparkles-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"></div>
+
+    <!-- Bootstrap JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+      // Array of gradient backgrounds
+      const gradients = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+        'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+        'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+        'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)'
+      ];
+      
+      let currentGradientIndex = 0;
+      
+      // Show alert function
+      function showAlert() {
+        const messages = [
+          '🌟 Hello there, amazing person!',
+          '✨ You clicked the magic button!',
+          '🎉 Welcome to the wonderful world of web development!',
+          '💫 Bootstrap makes everything beautiful!',
+          '🚀 Ready to build something incredible?'
+        ];
+        
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        
+        // Create a custom alert with Bootstrap modal
+        const alertModal = document.createElement('div');
+        alertModal.className = 'modal fade';
+        alertModal.innerHTML = `
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-primary">
+              <div class="modal-header border-primary">
+                <h5 class="modal-title">
+                  <i class="bi bi-star-fill text-warning me-2"></i>
+                  Hello World Says...
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body text-center py-4">
+                <div style="font-size: 3rem;" class="mb-3">👋</div>
+                <p class="lead">${randomMessage}</p>
+              </div>
+              <div class="modal-footer border-primary justify-content-center">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                  <i class="bi bi-heart-fill me-1"></i>Awesome!
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(alertModal);
+        const modal = new bootstrap.Modal(alertModal);
+        modal.show();
+        
+        // Remove modal from DOM after it's hidden
+        alertModal.addEventListener('hidden.bs.modal', () => {
+          document.body.removeChild(alertModal);
+        });
+      }
+      
+      // Change background function
+      function changeBackground() {
+        currentGradientIndex = (currentGradientIndex + 1) % gradients.length;
+        document.body.style.background = gradients[currentGradientIndex];
+        
+        // Add a temporary flash effect
+        document.body.style.transition = 'background 0.5s ease-in-out';
+        setTimeout(() => {
+          document.body.style.transition = '';
+        }, 500);
+      }
+      
+      // Add sparkles function
+      function addSparkles() {
+        const container = document.getElementById('sparkles-container');
+        const colors = ['#FFD700', '#FF69B4', '#00CED1', '#32CD32', '#FF6347', '#9370DB'];
+        
+        for (let i = 0; i < 20; i++) {
+          const sparkle = document.createElement('div');
+          sparkle.innerHTML = '✨';
+          sparkle.style.position = 'absolute';
+          sparkle.style.left = Math.random() * 100 + '%';
+          sparkle.style.top = Math.random() * 100 + '%';
+          sparkle.style.color = colors[Math.floor(Math.random() * colors.length)];
+          sparkle.style.fontSize = (Math.random() * 20 + 10) + 'px';
+          sparkle.style.animation = `sparkleFloat ${Math.random() * 3 + 2}s ease-out forwards`;
+          sparkle.style.zIndex = '1001';
+          
+          container.appendChild(sparkle);
+          
+          // Remove sparkle after animation
+          setTimeout(() => {
+            if (container.contains(sparkle)) {
+              container.removeChild(sparkle);
+            }
+          }, 5000);
+        }
+      }
+      
+      // Add sparkle animation keyframes
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes sparkleFloat {
+          0% {
+            opacity: 1;
+            transform: translateY(0) scale(0);
+          }
+          50% {
+            opacity: 1;
+            transform: translateY(-50px) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-100px) scale(0);
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Add some automatic sparkles on page load
+      setTimeout(() => {
+        addSparkles();
+      }, 1000);
+      
+      // Add periodic sparkles
+      setInterval(() => {
+        if (Math.random() < 0.3) { // 30% chance every 3 seconds
+          addSparkles();
+        }
+      }, 3000);
+    </script>
+  </body>
+</html>

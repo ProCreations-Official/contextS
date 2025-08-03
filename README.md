@@ -23,8 +23,9 @@
 ### Step 1: Clone and Setup
 
 ```bash
-# Clone or download the ContextS folder
-cd ContextS
+# Clone the ContextS repository
+git clone https://github.com/ProCreations-Official/contextS.git
+cd contextS
 
 # Install dependencies
 pip install -r requirements.txt
