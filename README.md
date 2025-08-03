@@ -119,7 +119,7 @@ get_smart_docs(
 - `topic` (optional): Focus area (e.g., "routing", "authentication")
 - `tokens` (optional): Max tokens to retrieve (default: 200,000)
 - `version` (optional): Specific version (e.g., "v14.3.0-canary.87")
-- `context` (optional): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
+- `context` (required): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
 
 ## 💡 Example Workflows
 
