@@ -41,6 +41,75 @@ if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY)):
 # Context7 API base URL
 CONTEXT7_BASE_URL = "https://context7.com/api/v1"
 
+# Model availability functions
+def get_available_models() -> dict:
+    """Get available AI models based on configured API keys."""
+    available = {
+        "gemini": [],
+        "openai": []
+    }
+    
+    if GEMINI_AVAILABLE:
+        available["gemini"] = [
+            "gemini-2.5-pro",      # Slowest, highest quality
+            "gemini-2.5-flash",    # Default for Gemini, good balance  
+            "gemini-2.5-flash-lite" # Fastest, worst quality
+        ]
+    
+    if OPENAI_AVAILABLE and OPENAI_API_KEY:
+        available["openai"] = [
+            "gpt-4.1",      # Slowest, highest quality
+            "gpt-4.1-mini", # Balance of speed and quality
+            "gpt-4.1-nano"  # Fastest, worst quality
+        ]
+    
+    return available
+
+def get_all_available_models() -> list:
+    """Get a flat list of all available model names."""
+    available = get_available_models()
+    all_models = []
+    all_models.extend(available["gemini"])
+    all_models.extend(available["openai"])
+    return all_models
+
+def generate_model_description() -> str:
+    """Generate dynamic model parameter description based on available models."""
+    available = get_available_models()
+    
+    if not available["gemini"] and not available["openai"]:
+        return "No AI models available. Please configure GEMINI_API_KEY and/or OPENAI_API_KEY."
+    
+    description = "Optional AI model to use. Available options:\n"
+    
+    if available["gemini"]:
+        description += "\nGemini models (require GEMINI_API_KEY):\n"
+        for model in available["gemini"]:
+            if model == "gemini-2.5-pro":
+                description += f'               - "{model}": Slowest, highest quality\n'
+            elif model == "gemini-2.5-flash":
+                description += f'               - "{model}": Default for Gemini, good balance\n'
+            elif model == "gemini-2.5-flash-lite":
+                description += f'               - "{model}": Fastest, worst quality\n'
+    
+    if available["openai"]:
+        description += "\nOpenAI models (require OPENAI_API_KEY):\n"
+        for model in available["openai"]:
+            if model == "gpt-4.1":
+                description += f'               - "{model}": Slowest, highest quality\n'
+            elif model == "gpt-4.1-mini":
+                description += f'               - "{model}": Balance of speed and quality\n'
+            elif model == "gpt-4.1-nano":
+                description += f'               - "{model}": Fastest, worst quality\n'
+    
+    # Set default
+    if available["gemini"]:
+        description += f'\n               If not specified, will use "gemini-2.5-flash".'
+    elif available["openai"]:
+        description += f'\n               If not specified, will use "gpt-4.1".'
+    
+    return description
+
 # Create FastMCP server instance
 mcp = FastMCP("ContextS")
 
@@ -109,16 +178,9 @@ async def get_smart_docs(
     tokens: int = 200000,
     version: Optional[str] = None,
     context: Optional[str] = None,
-    model: Optional[Literal[
-        "gemini-2.5-pro",      # Slowest, highest quality (if Gemini configured)
-        "gemini-2.5-flash",    # Default for Gemini, good balance (if Gemini configured)
-        "gemini-2.5-flash-lite", # Fastest, worst quality (if Gemini configured)
-        "gpt-4.1",             # Slowest, highest quality (if OpenAI configured)
-        "gpt-4.1-mini",        # Balance of speed and quality (if OpenAI configured)
-        "gpt-4.1-nano"         # Fastest, worst quality (if OpenAI configured)
-    ]] = None
+    model: Optional[str] = None
 ) -> str:
-    """Get AI-enhanced documentation with targeted code examples.
+    f"""Get AI-enhanced documentation with targeted code examples.
     
     Args:
         library_id: Context7-compatible library ID (e.g., 'vercel/next.js', 'mongodb/docs')
@@ -126,20 +188,34 @@ async def get_smart_docs(
         tokens: Maximum tokens to retrieve (default: 200000)
         version: Optional specific version (e.g., 'v14.3.0-canary.87')
         context: Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
-        model: Optional AI model to use. Options include:
-               - "gemini-2.5-pro": Slowest, highest quality (requires GEMINI_API_KEY)
-               - "gemini-2.5-flash": Default for Gemini, good balance (requires GEMINI_API_KEY)
-               - "gemini-2.5-flash-lite": Fastest, worst quality (requires GEMINI_API_KEY)
-               - "gpt-4.1": Slowest, highest quality (requires OPENAI_API_KEY)
-               - "gpt-4.1-mini": Balance of speed and quality (requires OPENAI_API_KEY)
-               - "gpt-4.1-nano": Fastest, worst quality (requires OPENAI_API_KEY)
-               If not specified, will use "gemini-2.5-flash" if Gemini is configured, otherwise "gpt-4.1".
+        model: {generate_model_description()}
     
     Returns:
         AI-enhanced documentation with practical code examples
     """
     if not library_id:
         return "Error: library_id parameter is required"
+    
+    # Validate requested model is available
+    if model:
+        available_models = get_all_available_models()
+        if not available_models:
+            return "Error: No AI models configured. Please set up GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
+        
+        if model not in available_models:
+            # Provide specific error messages based on model type
+            if model.startswith("gemini"):
+                if not GEMINI_AVAILABLE:
+                    return f"Error: Gemini model '{model}' requested but GEMINI_API_KEY not configured. Please set up Gemini API or try an OpenAI model if available."
+                else:
+                    return f"Error: Unknown Gemini model '{model}'. Available Gemini models: {', '.join([m for m in available_models if m.startswith('gemini')])}."
+            elif model.startswith("gpt"):
+                if not (OPENAI_AVAILABLE and OPENAI_API_KEY):
+                    return f"Error: OpenAI model '{model}' requested but OpenAI API not configured. Please set up OPENAI_API_KEY or try a Gemini model if available."
+                else:
+                    return f"Error: Unknown OpenAI model '{model}'. Available OpenAI models: {', '.join([m for m in available_models if m.startswith('gpt')])}."
+            else:
+                return f"Error: Unknown model '{model}'. Available models: {', '.join(available_models)}."
     
     try:
         # Construct Context7 URL
@@ -186,10 +262,10 @@ async def enhance_with_ai(docs: str, library_id: str, topic: Optional[str], cont
     """Enhance documentation with AI-powered insights and code examples."""
     
     # Determine which model to use based on availability and preference
-    model_to_use = await _determine_ai_model(selected_model)
+    model_to_use, error_message = await _determine_ai_model(selected_model)
     
-    if not model_to_use:
-        return f"# Documentation for {library_id}\n\n{docs}\n\n*No AI service available. Please configure GEMINI_API_KEY or OPENAI_API_KEY.*"
+    if error_message:
+        return f"# Documentation for {library_id}\n\n{docs}\n\n*{error_message}*"
     
     try:
         # Create enhancement prompt (same for both AI services)
@@ -271,34 +347,46 @@ Create documentation that teaches developers to become experts, not just users."
         return f"# Documentation for {library_id}\n\n{docs}\n\n*AI enhancement failed: {str(e)}*"
 
 
-async def _determine_ai_model(requested_model: Optional[str]) -> Optional[str]:
-    """Determine which AI model to use based on availability and request."""
+async def _determine_ai_model(requested_model: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """Determine which AI model to use based on availability and request.
+    
+    Returns:
+        Tuple of (model_name, error_message). If error_message is not None, model_name will be None.
+    """
     
     # If a specific model is requested, validate it's available
     if requested_model:
-        if requested_model.startswith("gemini") and not GEMINI_AVAILABLE:
-            logger.warning(f"Requested Gemini model '{requested_model}' but GEMINI_API_KEY not configured")
-            # Fall back to OpenAI if available
-            if OPENAI_AVAILABLE and OPENAI_API_KEY:
-                return "gpt-4.1"
-            return None
-        elif requested_model.startswith("gpt") and not (OPENAI_AVAILABLE and OPENAI_API_KEY):
-            logger.warning(f"Requested OpenAI model '{requested_model}' but OpenAI not available")
-            # Fall back to Gemini if available
-            if GEMINI_AVAILABLE:
-                return "gemini-2.5-flash"
-            return None
-        else:
-            # Requested model is available
-            return requested_model
+        available_models = get_all_available_models()
+        
+        if not available_models:
+            return None, "No AI models configured. Please set up GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
+        
+        if requested_model not in available_models:
+            if requested_model.startswith("gemini"):
+                if not GEMINI_AVAILABLE:
+                    return None, f"Gemini model '{requested_model}' requested but GEMINI_API_KEY not configured. Please set up Gemini API."
+                else:
+                    gemini_models = [m for m in available_models if m.startswith('gemini')]
+                    return None, f"Unknown Gemini model '{requested_model}'. Available Gemini models: {', '.join(gemini_models)}."
+            elif requested_model.startswith("gpt"):
+                if not (OPENAI_AVAILABLE and OPENAI_API_KEY):
+                    return None, f"OpenAI model '{requested_model}' requested but OpenAI API not configured. Please set up OPENAI_API_KEY."
+                else:
+                    openai_models = [m for m in available_models if m.startswith('gpt')]
+                    return None, f"Unknown OpenAI model '{requested_model}'. Available OpenAI models: {', '.join(openai_models)}."
+            else:
+                return None, f"Unknown model '{requested_model}'. Available models: {', '.join(available_models)}."
+        
+        # Requested model is available
+        return requested_model, None
     
     # No specific model requested, use default priority: Gemini first, then OpenAI
     if GEMINI_AVAILABLE:
-        return "gemini-2.5-flash"
+        return "gemini-2.5-flash", None
     elif OPENAI_AVAILABLE and OPENAI_API_KEY:
-        return "gpt-4.1"
+        return "gpt-4.1", None
     
-    return None
+    return None, "No AI models configured. Please set up GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
 
 
 async def _enhance_with_gemini(prompt: str, model_name: str, library_id: str, docs: str) -> str:
