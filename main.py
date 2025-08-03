@@ -181,19 +181,19 @@ async def get_smart_docs(
     model: Optional[str] = None,
     extra_libraries: Optional[list[str]] = None
 ) -> str:
-    f"""Get AI-enhanced documentation with targeted code examples from multiple libraries.
+    f"""Get AI-enhanced documentation with targeted code examples.
     
     Args:
-        library_id: Context7-compatible library ID (e.g., 'vercel/next.js', 'mongodb/docs') - this will be the primary library
+        library_id: Context7-compatible library ID (e.g., 'vercel/next.js', 'mongodb/docs')
         topic: Optional topic to focus on (e.g., 'routing', 'authentication')
-        tokens: Maximum tokens to retrieve per library (default: 200000, capped at 200k)
-        version: Optional specific version for the primary library (e.g., 'v14.3.0-canary.87')
+        tokens: Maximum tokens to retrieve (default: 200000, capped at 200k)
+        version: Optional specific version (e.g., 'v14.3.0-canary.87')
         context: Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
         model: {generate_model_description()}
-        extra_libraries: Optional list of up to 2 additional library IDs to include code examples from. Each library will be fetched with the same token limit. Useful for getting integration examples between multiple libraries.
+        extra_libraries: Optional list of up to 2 additional library IDs for integration examples
     
     Returns:
-        AI-enhanced documentation with practical code examples from the primary library and additional libraries, showing how they work together
+        AI-enhanced documentation with practical code examples tailored to your needs
     """
     if not library_id:
         return "Error: library_id parameter is required"

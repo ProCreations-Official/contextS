@@ -1,6 +1,6 @@
 <div align="center">
 
-![ContextS Animation](typing-animation.html)
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=5000&pause=2000&color=6fa8dc&center=true&vCenter=true&width=600&lines=Context+smart.+Let+AI+experts+help+your+AI." alt="Typing SVG" />
 
 # ContextS - Smart Documentation MCP Server
 
@@ -8,20 +8,21 @@
 
 </div>
 
-**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance from multiple libraries simultaneously. The "S" stands for **Smart** - it supports both Google Gemini and OpenAI models to provide targeted, practical documentation with working code examples and cross-library integration patterns.
+**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance. The "S" stands for **Smart** - it supports both Google Gemini and OpenAI models to provide targeted, practical documentation with working code examples tailored to your specific needs.
 
 ## Features
 
-- **Multi-Library Integration**: Get documentation from up to 3 libraries simultaneously with the new `extra_libraries` parameter
-- **Smart Documentation**: AI-enhanced docs with practical code examples and cross-library integration patterns
+- **Smart Documentation**: AI-enhanced docs with practical code examples tailored to your project
 - **Dual AI Support**: Choose between Google Gemini and OpenAI models
-- **Intelligent Fallback**: Automatically switches between AI providers
+- **Intelligent Fallback**: Automatically switches between AI providers  
 - **Model Selection**: Pick the right model for speed vs quality tradeoffs
 - **Library Search**: Find the right library IDs for any package
 - **Version-Specific Docs**: Get documentation for specific library versions
 - **Topic Filtering**: Focus on specific areas like routing, authentication, etc.
+- **Context-Aware**: Provide project details to get highly relevant examples
 - **Up-to-Date Content**: Powered by Context7's real-time documentation database
 - **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients
+- **Multi-Library Support**: Optional integration examples from multiple libraries
 
 ## Requirements
 
@@ -158,40 +159,30 @@ resolve_library_id(query="next.js")
 
 **Returns**: A list of matching libraries with their Context7-compatible IDs.
 
-### 2. `get_smart_docs` - Get AI-Enhanced Documentation with Multi-Library Support
+### 2. `get_smart_docs` - Get AI-Enhanced Documentation
 
-Get smart documentation with practical examples from multiple libraries:
+Get smart documentation with practical examples:
 
 ```
-# Single library example
 get_smart_docs(
     library_id="vercel/next.js",
     topic="routing", 
     context="building a blog with dynamic routes using Next.js 14, need comprehensive examples with file-based routing, dynamic segments, and SEO optimization",
     model="gemini-2.5-flash"
 )
-
-# Multi-library integration example
-get_smart_docs(
-    library_id="vercel/next.js",
-    extra_libraries=["supabase/supabase", "mongodb/docs"],
-    topic="authentication",
-    context="building a full-stack Next.js application with Supabase auth and MongoDB database integration",
-    model="gemini-2.5-flash"
-)
 ```
 
 **Parameters**:
-- `library_id` (required): Context7-compatible library ID for the primary library
-- `extra_libraries` (optional): List of up to 2 additional library IDs for integration examples
+- `library_id` (required): Context7-compatible library ID
 - `topic` (optional): Focus area (e.g., "routing", "authentication")
-- `tokens` (optional): Max tokens to retrieve per library (default: 200,000)
-- `version` (optional): Specific version for primary library (e.g., "v14.3.0-canary.87")
+- `tokens` (optional): Max tokens to retrieve (default: 200,000)
+- `version` (optional): Specific version (e.g., "v14.3.0-canary.87")
 - `context` (optional): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
 - `model` (optional): AI model to use for enhancement. Options:
   - **Gemini Models**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
   - **OpenAI Models**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
   - If not specified, uses intelligent fallback (Gemini 2.5 Flash → GPT-4.1)
+- `extra_libraries` (optional): List of up to 2 additional library IDs for integration examples
 
 ## Example Workflows
 
@@ -239,15 +230,17 @@ get_smart_docs(
 )
 ```
 
-### 4. Multi-Library Full-Stack Integration
+### Advanced: Multi-Library Integration
+
+For complex projects requiring integration between multiple libraries, you can optionally include additional libraries:
 
 ```
-# Get documentation showing how Next.js, Supabase, and Tailwind CSS work together
+# Advanced: Get integration patterns for multiple libraries
 get_smart_docs(
     library_id="vercel/next.js",
     extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"],
     topic="full-stack development",
-    context="building a complete e-commerce application with Next.js frontend, Supabase backend and auth, and Tailwind for styling. Need patterns for data fetching, authentication flows, and responsive design",
+    context="building a complete e-commerce application with Next.js frontend, Supabase backend and auth, and Tailwind for styling",
     model="gemini-2.5-flash"
 )
 ```
