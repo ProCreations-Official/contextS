@@ -166,18 +166,18 @@ Get smart documentation with practical examples:
 ```
 get_smart_docs(
     library_id="vercel/next.js",
-    topic="routing", 
     context="building a blog with dynamic routes using Next.js 14, need comprehensive examples with file-based routing, dynamic segments, and SEO optimization",
+    topic="routing",
     model="gemini-2.5-flash"
 )
 ```
 
 **Parameters**:
 - `library_id` (required): Context7-compatible library ID
+- `context` (required): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
 - `topic` (optional): Focus area (e.g., "routing", "authentication")
 - `tokens` (optional): Max tokens to retrieve (default: 200,000)
 - `version` (optional): Specific version (e.g., "v14.3.0-canary.87")
-- `context` (optional): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
 - `model` (optional): AI model to use for enhancement. Options:
   - **Gemini Models**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
   - **OpenAI Models**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
@@ -195,8 +195,8 @@ resolve_library_id(query="next.js")
 # Step 2: Get smart routing docs
 get_smart_docs(
     library_id="vercel/next.js",
-    topic="routing",
     context="I want to create dynamic blog post pages with Next.js, including slug-based routing, metadata generation, and static generation for better performance",
+    topic="routing",
     model="gemini-2.5-flash"
 )
 ```
@@ -210,8 +210,8 @@ resolve_library_id(query="supabase")
 # Step 2: Get authentication docs
 get_smart_docs(
     library_id="supabase/supabase",
-    topic="authentication",
     context="implementing user login and signup with Supabase Auth, including social providers, email verification, password reset, and role-based access control",
+    topic="authentication",
     model="gpt-4.1-mini"
 )
 ```
@@ -238,9 +238,9 @@ For complex projects requiring integration between multiple libraries, you can o
 # Advanced: Get integration patterns for multiple libraries
 get_smart_docs(
     library_id="vercel/next.js",
-    extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"],
-    topic="full-stack development",
     context="building a complete e-commerce application with Next.js frontend, Supabase backend and auth, and Tailwind for styling",
+    topic="full-stack development",
+    extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"],
     model="gemini-2.5-flash"
 )
 ```

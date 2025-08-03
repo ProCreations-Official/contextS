@@ -174,10 +174,10 @@ async def resolve_library_id(query: str) -> str:
 @mcp.tool()
 async def get_smart_docs(
     library_id: str,
+    context: str,
     topic: Optional[str] = None,
     tokens: int = 200000,
     version: Optional[str] = None,
-    context: Optional[str] = None,
     model: Optional[str] = None,
     extra_libraries: Optional[list[str]] = None
 ) -> str:
@@ -185,10 +185,10 @@ async def get_smart_docs(
     
     Args:
         library_id: Context7-compatible library ID (e.g., 'vercel/next.js', 'mongodb/docs')
+        context: Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
         topic: Optional topic to focus on (e.g., 'routing', 'authentication')
         tokens: Maximum tokens to retrieve (default: 200000, capped at 200k)
         version: Optional specific version (e.g., 'v14.3.0-canary.87')
-        context: Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
         model: {generate_model_description()}
         extra_libraries: Optional list of up to 2 additional library IDs for integration examples
     
@@ -197,6 +197,9 @@ async def get_smart_docs(
     """
     if not library_id:
         return "Error: library_id parameter is required"
+    
+    if not context or not context.strip():
+        return "Error: context parameter is required - provide detailed context about what you're trying to accomplish"
     
     # Validate extra_libraries parameter
     if extra_libraries is not None:
@@ -251,7 +254,7 @@ async def get_smart_docs(
                     all_docs[extra_lib] = extra_docs
         
         # Enhance with AI (Gemini or OpenAI based on availability and model selection)
-        enhanced_docs = await enhance_with_ai(all_docs, library_id, topic, context or "", model)
+        enhanced_docs = await enhance_with_ai(all_docs, library_id, topic, context, model)
         return enhanced_docs
         
     except Exception as e:
@@ -335,7 +338,7 @@ async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, topic
 **Primary Library:** {main_library_id}
 **Additional Libraries:** {', '.join(additional_libs)}
 **Topic:** {topic or "comprehensive coverage"}
-**Developer Context:** {context or "comprehensive development guidance needed"}
+**Developer Context:** {context}
 
 **Raw Documentation from Multiple Libraries:**
 {all_docs_text}
@@ -405,7 +408,7 @@ Create documentation that teaches developers to become experts with multiple lib
 
 **Library:** {main_library_id}
 **Topic:** {topic or "comprehensive coverage"}
-**Developer Context:** {context or "comprehensive development guidance needed"}
+**Developer Context:** {context}
 
 **Raw Documentation:**
 {all_docs_text}
