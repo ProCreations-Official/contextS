@@ -176,7 +176,7 @@ async def get_smart_docs(
     library_id: str,
     context: str,
     topic: Optional[str] = None,
-    tokens: int = 200000,
+    tokens: int = 150000,
     version: Optional[str] = None,
     model: Optional[str] = None,
     extra_libraries: Optional[list[str]] = None
@@ -190,7 +190,7 @@ async def get_smart_docs(
         library_id: Context7-compatible library ID for your primary/main library (e.g., 'vercel/next.js', 'mongodb/docs')
         context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
         topic: Optional topic to focus on (e.g., 'routing', 'authentication', 'setup')
-        tokens: Maximum tokens to retrieve per library (default: 200000, capped at 200k)
+        tokens: Maximum tokens to retrieve per library (default: 150000, capped at 200k)
         version: Optional specific version for the main library (e.g., 'v14.3.0-canary.87')
         model: {generate_model_description()}
         extra_libraries: ONLY use when you need help integrating MULTIPLE libraries together. List of up to 2 additional library IDs. Example: if building a Next.js app with Supabase auth and Tailwind styling, use library_id="vercel/next.js" and extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"]
