@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bubble Pop Paradise</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        #game-container {
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            max-height: 600px;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading">Loading Bubble Pop Paradise... 🎈</div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+    <script>
+        // Game configuration
+        const config = {
+            type: Phaser.AUTO,
+            parent: 'game-container',
+            width: 800,
+            height: 600,
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: -100 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        // Game variables
+        let bubbles;
+        let score = 0;
+        let scoreText;
+        let particles;
+        let gameStarted = false;
+        let bubbleTimer;
+        let combo = 0;
+        let comboText;
+        let bestScore = localStorage.getItem('bubbleBestScore') || 0;
+        let bestScoreText;
+        let gameTime = 0;
+        let timeText;
+        let specialBubbleChance = 0.1;
+
+        // Bubble colors with point values
+        const bubbleTypes = [
+            { color: 0xff6b6b, points: 10, name: 'red' },     // Red
+            { color: 0x4ecdc4, points: 15, name: 'cyan' },    // Cyan
+            { color: 0x45b7d1, points: 20, name: 'blue' },    // Blue
+            { color: 0xf9ca24, points: 25, name: 'yellow' },  // Yellow
+            { color: 0xa29bfe, points: 30, name: 'purple' },  // Purple
+            { color: 0xfd79a8, points: 35, name: 'pink' },    // Pink
+            { color: 0x00b894, points: 40, name: 'green' }    // Green
+        ];
+
+        // Special rainbow bubble
+        const rainbowBubble = { color: 0xffffff, points: 100, name: 'rainbow', special: true };
+
+        function preload() {
+            // Create colorful bubble graphics dynamically
+            this.load.on('complete', () => {
+                document.getElementById('loading').style.display = 'none';
+            });
+
+            // We'll create all graphics procedurally, no external assets needed!
+        }
+
+        function create() {
+            // Create gradient background
+            const graphics = this.add.graphics();
+            
+            // Sky gradient
+            const colors = [0x87ceeb, 0x98d8c8, 0xf7dc6f];
+            let y = 0;
+            for (let i = 0; i < 3; i++) {
+                graphics.fillStyle(colors[i], 1 - (i * 0.2));
+                graphics.fillRect(0, y, 800, 200);
+                y += 200;
+            }
+
+            // Add some clouds
+            for (let i = 0; i < 5; i++) {
+                const cloudX = Phaser.Math.Between(50, 750);
+                const cloudY = Phaser.Math.Between(50, 200);
+                drawCloud(this, cloudX, cloudY);
+            }
+
+            // Create bubble group
+            bubbles = this.physics.add.group();
+
+            // Create particle emitter for pop effects
+            const particleGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+            particleGraphics.fillStyle(0xffffff);
+            particleGraphics.fillCircle(4, 4, 4);
+            particleGraphics.generateTexture('particle', 8, 8);
+            
+            particles = this.add.particles(0, 0, 'particle', {
+                speed: { min: 100, max: 300 },
+                scale: { start: 1, end: 0 },
+                blendMode: 'ADD',
+                lifespan: 600,
+                quantity: 10
+            });
+            particles.stop();
+
+            // UI Elements
+            scoreText = this.add.text(20, 20, 'Score: 0', { 
+                fontSize: '28px', 
+                fill: '#ffffff',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 4,
+                shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 2, stroke: true, fill: true }
+            });
+
+            bestScoreText = this.add.text(20, 60, `Best: ${bestScore}`, { 
+                fontSize: '20px', 
+                fill: '#ffd700',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 3
+            });
+
+            comboText = this.add.text(400, 50, '', { 
+                fontSize: '36px', 
+                fill: '#ffff00',
+                fontFamily: 'Arial',
+                stroke: '#ff0000',
+                strokeThickness: 4,
+                align: 'center'
+            });
+            comboText.setOrigin(0.5);
+            comboText.setAlpha(0);
+
+            timeText = this.add.text(780, 20, 'Time: 0s', { 
+                fontSize: '24px', 
+                fill: '#ffffff',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 3,
+                align: 'right'
+            });
+            timeText.setOrigin(1, 0);
+
+            // Start screen
+            const startText = this.add.text(400, 300, 'Tap to Start!\n\nPop the bubbles!\nRainbow bubbles = 100 points! 🌈', {
+                fontSize: '36px',
+                fill: '#ffffff',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 5,
+                align: 'center'
+            });
+            startText.setOrigin(0.5);
+
+            // Start game on first tap/click
+            this.input.once('pointerdown', () => {
+                startText.destroy();
+                gameStarted = true;
+                
+                // Start spawning bubbles
+                bubbleTimer = this.time.addEvent({
+                    delay: 1000,
+                    callback: () => spawnBubble(this),
+                    loop: true
+                });
+
+                // Spawn first few bubbles
+                for (let i = 0; i < 3; i++) {
+                    this.time.delayedCall(i * 200, () => spawnBubble(this));
+                }
+            });
+
+            // Timer for game time
+            this.time.addEvent({
+                delay: 1000,
+                callback: () => {
+                    if (gameStarted) {
+                        gameTime++;
+                        timeText.setText(`Time: ${gameTime}s`);
+                        
+                        // Increase difficulty over time
+                        if (gameTime % 10 === 0) {
+                            if (bubbleTimer.delay > 400) {
+                                bubbleTimer.delay -= 100;
+                            }
+                            specialBubbleChance = Math.min(0.3, specialBubbleChance + 0.02);
+                        }
+                    }
+                },
+                loop: true
+            });
+        }
+
+        function update() {
+            if (!gameStarted) return;
+
+            // Remove bubbles that float off screen
+            bubbles.children.entries.forEach(bubble => {
+                if (bubble.y < -50) {
+                    bubble.destroy();
+                    // Reset combo if a bubble escapes
+                    if (combo > 0) {
+                        combo = 0;
+                        showComboBreak(this);
+                    }
+                }
+            });
+        }
+
+        function spawnBubble(scene) {
+            const x = Phaser.Math.Between(50, 750);
+            const y = 650;
+            
+            // Decide if it's a special bubble
+            const isSpecial = Math.random() < specialBubbleChance;
+            const bubbleType = isSpecial ? rainbowBubble : Phaser.Math.RND.pick(bubbleTypes);
+            
+            // Create bubble sprite
+            const bubble = scene.add.circle(x, y, 30, bubbleType.color);
+            scene.physics.add.existing(bubble);
+            
+            // Add properties
+            bubble.body.setVelocity(
+                Phaser.Math.Between(-30, 30), 
+                Phaser.Math.Between(-80, -120)
+            );
+            bubble.setInteractive();
+            bubble.points = bubbleType.points;
+            bubble.bubbleType = bubbleType;
+            
+            // Add shimmer effect
+            if (bubbleType.special) {
+                // Rainbow effect
+                scene.tweens.add({
+                    targets: bubble,
+                    scaleX: 1.1,
+                    scaleY: 1.1,
+                    duration: 500,
+                    yoyo: true,
+                    repeat: -1
+                });
+                
+                // Color cycling for rainbow
+                let hue = 0;
+                bubble.updateColor = scene.time.addEvent({
+                    delay: 50,
+                    callback: () => {
+                        hue = (hue + 5) % 360;
+                        const color = Phaser.Display.Color.HSLToColor(hue / 360, 1, 0.5);
+                        bubble.setFillStyle(color.color);
+                    },
+                    loop: true
+                });
+            } else {
+                // Regular bubble shimmer
+                bubble.setStrokeStyle(2, 0xffffff, 0.5);
+                scene.tweens.add({
+                    targets: bubble,
+                    alpha: 0.8,
+                    duration: 1000,
+                    yoyo: true,
+                    repeat: -1
+                });
+            }
+            
+            // Pop on click
+            bubble.on('pointerdown', () => popBubble(scene, bubble));
+            
+            // Add hover effect
+            bubble.on('pointerover', () => {
+                scene.tweens.add({
+                    targets: bubble,
+                    scale: 1.2,
+                    duration: 100
+                });
+            });
+            
+            bubble.on('pointerout', () => {
+                scene.tweens.add({
+                    targets: bubble,
+                    scale: 1,
+                    duration: 100
+                });
+            });
+            
+            bubbles.add(bubble);
+        }
+
+        function popBubble(scene, bubble) {
+            if (!bubble.active) return;
+            
+            const x = bubble.x;
+            const y = bubble.y;
+            const points = bubble.points;
+            const isSpecial = bubble.bubbleType.special;
+            
+            // Update score
+            combo++;
+            const comboMultiplier = Math.min(combo, 5);
+            const totalPoints = points * comboMultiplier;
+            score += totalPoints;
+            scoreText.setText(`Score: ${score}`);
+            
+            // Update best score
+            if (score > bestScore) {
+                bestScore = score;
+                bestScoreText.setText(`Best: ${bestScore}`);
+                localStorage.setItem('bubbleBestScore', bestScore);
+            }
+            
+            // Show points
+            const pointsText = scene.add.text(x, y, `+${totalPoints}`, {
+                fontSize: isSpecial ? '32px' : '24px',
+                fill: isSpecial ? '#ffd700' : '#ffffff',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 3
+            });
+            pointsText.setOrigin(0.5);
+            
+            scene.tweens.add({
+                targets: pointsText,
+                y: y - 50,
+                alpha: 0,
+                duration: 1000,
+                ease: 'Power2',
+                onComplete: () => pointsText.destroy()
+            });
+            
+            // Show combo
+            if (combo > 1) {
+                comboText.setText(`${combo}x COMBO!`);
+                comboText.setAlpha(1);
+                comboText.setScale(0.5);
+                scene.tweens.add({
+                    targets: comboText,
+                    scale: 1,
+                    duration: 200,
+                    ease: 'Back.out',
+                    onComplete: () => {
+                        scene.time.delayedCall(500, () => {
+                            scene.tweens.add({
+                                targets: comboText,
+                                alpha: 0,
+                                duration: 300
+                            });
+                        });
+                    }
+                });
+            }
+            
+            // Particle burst
+            particles.emitParticleAt(x, y, isSpecial ? 30 : 15);
+            
+            // Special effects for rainbow bubble
+            if (isSpecial) {
+                // Rainbow explosion
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const sparkle = scene.add.circle(
+                        x + Math.cos(angle) * 20,
+                        y + Math.sin(angle) * 20,
+                        5,
+                        Phaser.Display.Color.HSLToColor(i / 8, 1, 0.5).color
+                    );
+                    
+                    scene.tweens.add({
+                        targets: sparkle,
+                        x: x + Math.cos(angle) * 100,
+                        y: y + Math.sin(angle) * 100,
+                        alpha: 0,
+                        duration: 800,
+                        ease: 'Power2',
+                        onComplete: () => sparkle.destroy()
+                    });
+                }
+                
+                // Screen flash
+                const flash = scene.add.rectangle(400, 300, 800, 600, 0xffffff, 0.3);
+                scene.tweens.add({
+                    targets: flash,
+                    alpha: 0,
+                    duration: 300,
+                    onComplete: () => flash.destroy()
+                });
+            }
+            
+            // Clean up color update event for rainbow bubbles
+            if (bubble.updateColor) {
+                bubble.updateColor.destroy();
+            }
+            
+            // Destroy bubble
+            bubble.destroy();
+        }
+
+        function showComboBreak(scene) {
+            const breakText = scene.add.text(400, 200, 'Combo Lost!', {
+                fontSize: '28px',
+                fill: '#ff0000',
+                fontFamily: 'Arial',
+                stroke: '#ffffff',
+                strokeThickness: 3
+            });
+            breakText.setOrigin(0.5);
+            breakText.setScale(0.5);
+            
+            scene.tweens.add({
+                targets: breakText,
+                scale: 1,
+                alpha: 0,
+                y: 250,
+                duration: 1000,
+                ease: 'Power2',
+                onComplete: () => breakText.destroy()
+            });
+        }
+
+        function drawCloud(scene, x, y) {
+            const cloud = scene.add.graphics();
+            cloud.fillStyle(0xffffff, 0.7);
+            
+            // Draw cloud with circles
+            cloud.fillCircle(x, y, 25);
+            cloud.fillCircle(x + 20, y, 30);
+            cloud.fillCircle(x + 40, y, 25);
+            cloud.fillCircle(x + 10, y - 15, 20);
+            cloud.fillCircle(x + 30, y - 15, 25);
+            
+            // Slow drift animation
+            scene.tweens.add({
+                targets: cloud,
+                x: 10,
+                duration: 30000,
+                repeat: -1,
+                yoyo: true
+            });
+        }
+
+        // Create game
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>
