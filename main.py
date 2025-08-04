@@ -545,7 +545,7 @@ async def _enhance_with_gemini(prompt: str, model_name: str, library_id: str, do
                 "temperature": 0.3,
                 "top_p": 0.8,
                 "top_k": 40,
-                "max_output_tokens": 8192,
+                "max_output_tokens": 24576,
             }
         )
         
@@ -580,7 +580,7 @@ async def _enhance_with_openai(prompt: str, model_name: str, library_id: str, do
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
-            max_tokens=8192,
+            max_tokens=24576,
         )
         
         await client.close()
