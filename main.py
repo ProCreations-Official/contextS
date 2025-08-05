@@ -344,141 +344,113 @@ async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, topic
         if has_multiple_libraries:
             # Multi-library prompt
             additional_libs = [lib for lib in libraries_list if lib != main_library_id]
-            prompt = f"""You are ContextS, an expert technical documentation assistant specializing in creating comprehensive, in-depth code documentation with extensive explanations. Your mission is to transform raw documentation from multiple libraries into detailed, educational resources that teach developers not just HOW to use the code, but WHY it works and WHAT to do with it.
+            prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
 
+**Context:** {context}
 **Primary Library:** {main_library_id}
-**Additional Libraries:** {', '.join(additional_libs)}
-**Topic:** {topic or "comprehensive coverage"}
-**Developer Context:** {context}
+**Integration Libraries:** {', '.join(additional_libs)}
+**Focus:** {topic or "complete integration guide"}
 
-**Raw Documentation from Multiple Libraries:**
+**Source Documentation:**
 {all_docs_text}
 
-**Your Enhancement Mission:**
-Create an exhaustive, educational guide that provides DEEP context and EXTENSIVE explanations. Focus primarily on {main_library_id} but show how it integrates with the additional libraries. For every code example, explain:
+**Your Mission:**
+Create a definitive integration guide that shows exactly how to use {main_library_id} with {', '.join(additional_libs)}. Every code example must be:
+- Complete and ready to run
+- Explained with clear reasoning
+- Focused on real-world implementation
+- Optimized for the user's specific context
 
-1. **What the code does** - Line-by-line explanations when needed
-2. **Why it's structured this way** - Design patterns and architectural decisions
-3. **How to implement it** - Complete, production-ready examples with full context
-4. **How libraries work together** - Integration patterns and best practices
-5. **What to watch out for** - Common pitfalls, edge cases, and debugging tips
-6. **How to extend it** - Ways to modify and adapt the code for different scenarios
-7. **When to use it** - Appropriate use cases and alternatives
+**Required Structure:**
 
-**Required Response Structure:**
-# Complete ContextS Multi-Library Documentation
+# {main_library_id} + {', '.join(additional_libs)} Integration Guide
 
-## Comprehensive Overview
-[Detailed explanation of the primary library and how it works with additional libraries, core philosophy, and when/why to use this combination]
+## Quick Start
+[Most essential setup and basic integration example - get users running in minutes]
 
-## Essential Concepts Deep Dive
-[In-depth explanation of fundamental concepts across all libraries with detailed examples and reasoning]
+## Core Integration Patterns
+[The 3-4 most important ways these libraries work together, with complete examples]
 
-## Step-by-Step Implementation Guide
-[Complete walkthrough with extensive code examples showing library integration, each with detailed explanations of:
-- What each line does
-- Why it's necessary
-- How it fits into the bigger picture
-- How libraries complement each other
-- Alternative approaches and their trade-offs]
+## Production Implementation
+[Full, deployable example addressing the user's specific context with:
+- Complete setup and configuration
+- Error handling and edge cases
+- Performance and security best practices
+- Testing strategy]
 
-## Advanced Usage Patterns
-[Complex real-world scenarios with comprehensive code examples showing multi-library integration and thorough explanations]
+## Advanced Techniques
+[Power-user patterns and optimizations specific to this library combination]
 
-## Production-Ready Examples
-[Complete, deployable code examples with:
-- Full error handling
-- Best practices implementation
-- Performance considerations
-- Security considerations
-- Testing approaches
-- Multi-library coordination]
+## Common Issues & Solutions
+[Real problems developers face with these libraries together, with fixes]
 
-## Implementation Strategies
-[Detailed guidance on how to structure projects, organize code, and integrate multiple libraries effectively]
+## Complete API Reference
+[Enhanced reference with integration-focused examples]
 
-## Troubleshooting & Debugging
-[Comprehensive troubleshooting guide with common issues across all libraries, their causes, and detailed solutions]
+**Quality Requirements:**
+- All code examples must be complete and runnable
+- Explain WHY, not just HOW
+- Focus ruthlessly on the user's stated context
+- Prioritize practical over theoretical
+- Include error handling in all examples
+- Show performance implications of choices
 
-## Enhanced Complete Reference
-[Reorganized and enhanced version of the original documentation with additional context and cross-library examples]
-
-**Quality Standards:**
-- Provide EXTENSIVE explanations for all code examples
-- Include complete, working code that can be copy-pasted and used
-- Explain the reasoning behind architectural decisions
-- Cover edge cases and error scenarios
-- Show how libraries work together effectively
-- Provide multiple approaches when applicable
-- Make it educational and comprehensive, not just functional
-
-Create documentation that teaches developers to become experts with multiple libraries, not just users."""
+Make this the definitive resource for using these libraries together."""
         else:
-            # Single library prompt (original style with fewer emojis)
-            prompt = f"""You are ContextS, an expert technical documentation assistant specializing in creating comprehensive, in-depth code documentation with extensive explanations. Your mission is to transform raw documentation into detailed, educational resources that teach developers not just HOW to use the code, but WHY it works and WHAT to do with it.
+            # Single library prompt
+            prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
 
+**Context:** {context}
 **Library:** {main_library_id}
-**Topic:** {topic or "comprehensive coverage"}
-**Developer Context:** {context}
+**Focus:** {topic or "complete implementation guide"}
 
-**Raw Documentation:**
+**Source Documentation:**
 {all_docs_text}
 
-**Your Enhancement Mission:**
-Create an exhaustive, educational guide that provides DEEP context and EXTENSIVE explanations. For every code example, explain:
+**Your Mission:**
+Create the definitive guide for {main_library_id} that directly addresses the user's context. Every code example must be:
+- Complete and ready to run
+- Explained with clear reasoning
+- Focused on real-world implementation
+- Optimized for the user's specific needs
 
-1. **What the code does** - Line-by-line explanations when needed
-2. **Why it's structured this way** - Design patterns and architectural decisions
-3. **How to implement it** - Complete, production-ready examples with full context
-4. **What to watch out for** - Common pitfalls, edge cases, and debugging tips
-5. **How to extend it** - Ways to modify and adapt the code for different scenarios
-6. **When to use it** - Appropriate use cases and alternatives
+**Required Structure:**
 
-**Required Response Structure:**
-# Complete ContextS Documentation for {main_library_id}
+# Complete {main_library_id} Implementation Guide
 
-## Comprehensive Overview
-[Detailed explanation of what this library does, its core philosophy, and when/why to use it]
+## Quick Start
+[Get the user productive in under 5 minutes with the most essential example]
 
-## Essential Concepts Deep Dive
-[In-depth explanation of fundamental concepts with detailed examples and reasoning]
+## Core Concepts & Implementation
+[The fundamental patterns and concepts, with complete working examples that build toward the user's goal]
 
-## Step-by-Step Implementation Guide
-[Complete walkthrough with extensive code examples, each with detailed explanations of:
-- What each line does
-- Why it's necessary
-- How it fits into the bigger picture
-- Alternative approaches and their trade-offs]
+## Production-Ready Solution
+[Full implementation addressing the user's specific context with:
+- Complete setup and configuration
+- Error handling and edge cases
+- Performance optimization
+- Security best practices
+- Testing approach]
 
-## Advanced Usage Patterns
-[Complex real-world scenarios with comprehensive code examples and thorough explanations]
+## Advanced Techniques
+[Power-user patterns and optimizations for complex scenarios]
 
-## Production-Ready Examples
-[Complete, deployable code examples with:
-- Full error handling
-- Best practices implementation
-- Performance considerations
-- Security considerations
-- Testing approaches]
+## Common Issues & Solutions
+[Real problems developers encounter, with detailed troubleshooting steps]
 
-## Implementation Strategies
-[Detailed guidance on how to structure projects, organize code, and integrate with other tools]
+## Complete API Reference
+[Enhanced reference with practical examples for each major feature]
 
-## Troubleshooting & Debugging
-[Comprehensive troubleshooting guide with common issues, their causes, and detailed solutions]
+**Quality Requirements:**
+- All code examples must be complete and runnable
+- Explain the reasoning behind every design choice
+- Focus ruthlessly on the user's stated context and goals
+- Prioritize practical implementation over theoretical concepts
+- Include comprehensive error handling
+- Show performance and security implications
+- Provide multiple approaches when relevant
 
-## Enhanced Complete Reference
-[Reorganized and enhanced version of the original documentation with additional context and examples]
-
-**Quality Standards:**
-- Provide EXTENSIVE explanations for all code examples
-- Include complete, working code that can be copy-pasted and used
-- Explain the reasoning behind architectural decisions
-- Cover edge cases and error scenarios
-- Provide multiple approaches when applicable
-- Make it educational and comprehensive, not just functional
-
-Create documentation that teaches developers to become experts, not just users."""
+Make this THE resource developers need to master {main_library_id} for their specific use case."""
 
         # Generate enhanced documentation based on selected model
         if model_to_use.startswith("gemini"):
@@ -543,10 +515,11 @@ async def _enhance_with_gemini(prompt: str, model_name: str, library_id: str, do
             model_name=model_name,
             generation_config={
                 "temperature": 0.3,
-                "top_p": 0.8,
+                "top_p": 0.9,
                 "top_k": 40,
                 "max_output_tokens": 24576,
-            }
+            },
+            system_instruction="You are ContextS, a world-class technical documentation expert who creates comprehensive, practical guides. You excel at transforming raw documentation into immediately actionable resources that make developers productive. Focus on complete, runnable examples with clear explanations of WHY each choice matters."
         )
         
         # Generate enhanced documentation
@@ -576,7 +549,7 @@ async def _enhance_with_openai(prompt: str, model_name: str, library_id: str, do
         response = await client.chat.completions.create(
             model=actual_model,
             messages=[
-                {"role": "system", "content": "You are ContextS, an expert technical documentation assistant."},
+                {"role": "system", "content": "You are ContextS, a world-class technical documentation expert who creates comprehensive, practical guides. You excel at transforming raw documentation into immediately actionable resources that make developers productive. Focus on complete, runnable examples with clear explanations of WHY each choice matters."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
