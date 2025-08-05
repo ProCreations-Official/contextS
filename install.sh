@@ -1,5 +1,5 @@
 #!/bin/bash
-# ContextS MCP Server Installation Script
+# ContextS MCP Server Installation Script (not needed, but makes setup a tiny bit easier)
 
 echo "🚀 Installing ContextS MCP Server..."
 
@@ -42,7 +42,7 @@ echo ""
 echo "🎉 ContextS MCP Server installation complete!"
 echo ""
 echo "📝 Next steps:"
-echo "1. Get a Gemini API key from https://aistudio.google.com/app/apikey"
+echo "1. Get a Gemini API key from https://aistudio.google.com/app/apikey, or OpenAI API key from https://platform.openai.com/api-keys"
 echo "2. Set your API key: export GEMINI_API_KEY='your-api-key-here'"
 echo "3. Configure your MCP client (see README.md for details)"
 echo "4. Start using ContextS with smart documentation!"
