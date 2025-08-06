@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ContextS MCP Server - AI-Powered Documentation Enhancement</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --custom-purple: #6610f2;
+            --custom-purple-dark: #5a10e0;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d1b4e 100%);
+            color: var(--bs-white);
+            padding: 8rem 0 6rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23ffffff" stroke-width="0.1" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-section h1 {
+            font-size: 3.8rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff, #e1d2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero-section p.lead {
+            font-size: 1.3rem;
+            font-weight: 300;
+            margin-bottom: 2.5rem;
+        }
+        
+        .feature-card {
+            min-height: 320px;
+            transition: all 0.3s ease;
+            border: 1px solid #333;
+            background: linear-gradient(145deg, #1e1e1e, #262626);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(102, 16, 242, 0.2);
+            border-color: var(--custom-purple);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--custom-purple), var(--custom-purple-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .ai-models-grid {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+        
+        .btn-custom-primary {
+            background: linear-gradient(135deg, var(--custom-purple), var(--custom-purple-dark));
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 16, 242, 0.3);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--custom-purple), transparent);
+            margin: 4rem 0;
+        }
+        
+        .testimonial-card {
+            background: linear-gradient(145deg, #1e1e1e, #262626);
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        .testimonial-card:hover {
+            border-color: var(--custom-purple);
+            box-shadow: 0 8px 20px rgba(102, 16, 242, 0.15);
+        }
+        
+        .footer-section {
+            background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+            border-top: 1px solid #333;
+        }
+        
+        .animated-bg {
+            background: linear-gradient(270deg, #6610f2, #20c997, #6610f2);
+            background-size: 600% 600%;
+            animation: gradientShift 8s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .stats-counter {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--custom-purple);
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+            .hero-section {
+                padding: 5rem 0 4rem 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-body">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg bg-dark border-bottom border-body fixed-top" data-bs-theme="dark">
+        <div class="container">
+            <a class="navbar-brand" href="#home">
+                <i class="bi bi-cpu-fill text-primary me-2"></i>
+                ContextS MCP
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#integration">Integration</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#testimonials">Testimonials</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-custom-primary btn-sm ms-2" href="https://github.com/contexts/mcp-server" target="_blank">
+                            <i class="bi bi-github me-1"></i>GitHub
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="home" class="hero-section">
+        <div class="container hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-2 mb-4">AI-Powered Documentation Revolution</h1>
+                    <p class="lead mb-5">
+                        Transform your raw documentation into comprehensive, actionable guides with ContextS MCP Server. 
+                        Leverage cutting-edge AI to make your development teams instantly productive.
+                    </p>
+                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                        <a href="#features" class="btn btn-custom-primary btn-lg">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Explore Features
+                        </a>
+                        <a href="#how-it-works" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-play-circle me-2"></i>See How It Works
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Row -->
+            <div class="row mt-5 pt-5">
+                <div class="col-md-4 text-center mb-4">
+                    <div class="stats-counter">50+</div>
+                    <p class="text-light">Supported Libraries</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="stats-counter">99%</div>
+                    <p class="text-light">Accuracy Rate</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="stats-counter">10x</div>
+                    <p class="text-light">Faster Documentation</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Features Section -->
+        <section id="features" class="py-5 my-5">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="display-4 text-primary-emphasis mb-4">Powerful Features for Modern Development</h2>
+                    <p class="lead text-muted">Everything you need to create world-class documentation with AI assistance</p>
+                </div>
+                
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+                    <!-- AI Content Generation -->
+                    <div class="col">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="feature-icon mx-auto">
+                                    <i class="bi bi-robot text-white fs-2"></i>
+                                </div>
+                                <h5 class="card-title text-light mb-3">AI-Powered Content Generation</h5>
+                                <p class="card-text text-secondary">Automatically generate high-quality documentation with practical code examples using advanced Gemini and OpenAI models.</p>
+                                <ul class="list-unstyled text-start small text-muted">
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Context-aware examples</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Multi-library integration</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Production-ready code</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Smart Library Resolution -->
+                    <div class="col">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="feature-icon mx-auto">
+                                    <i class="bi bi-search text-white fs-2"></i>
+                                </div>
+                                <h5 class="card-title text-light mb-3">Smart Library Resolution</h5>
+                                <p class="card-text text-secondary">Intelligent search and discovery of libraries with Context7 integration for comprehensive documentation access.</p>
+                                <ul class="list-unstyled text-start small text-muted">
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Fuzzy search capabilities</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Version-specific docs</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Trust score ratings</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Multi-Model Support -->
+                    <div class="col">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="feature-icon mx-auto">
+                                    <i class="bi bi-cpu text-white fs-2"></i>
+                                </div>
+                                <h5 class="card-title text-light mb-3">Multi-Model AI Support</h5>
+                                <p class="card-text text-secondary">Choose from Gemini and OpenAI models based on your needs - from speed to quality optimization.</p>
+                                <ul class="list-unstyled text-start small text-muted">
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Gemini 2.5 Pro/Flash</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>OpenAI GPT-4.1 series</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Automatic fallbacks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Developer Experience -->
+                    <div class="col">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="feature-icon mx-auto">
+                                    <i class="bi bi-code-slash text-white fs-2"></i>
+                                </div>
+                                <h5 class="card-title text-light mb-3">Developer-First Experience</h5>
+                                <p class="card-text text-secondary">Built for developers, by developers. Simple MCP integration with comprehensive error handling and logging.</p>
+                                <ul class="list-unstyled text-start small text-muted">
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>FastMCP framework</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Detailed error messages</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Easy configuration</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Optimized -->
+                    <div class="col">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="feature-icon mx-auto">
+                                    <i class="bi bi-lightning-charge text-white fs-2"></i>
+                                </div>
+                                <h5 class="card-title text-light mb-3">Performance Optimized</h5>
+                                <p class="card-text text-secondary">Efficient token management, concurrent processing, and intelligent caching for blazing-fast documentation generation.</p>
+                                <ul class="list-unstyled text-start small text-muted">
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Token optimization</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Concurrent requests</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Smart caching</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Production Ready -->
+                    <div class="col">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <div class="feature-icon mx-auto">
+                                    <i class="bi bi-shield-check text-white fs-2"></i>
+                                </div>
+                                <h5 class="card-title text-light mb-3">Production Ready</h5>
+                                <p class="card-text text-secondary">Enterprise-grade reliability with comprehensive error handling, logging, and security best practices.</p>
+                                <ul class="list-unstyled text-start small text-muted">
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Enterprise security</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Comprehensive logging</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Error recovery</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="py-5">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="display-4 text-primary-emphasis mb-4">How ContextS Works</h2>
+                    <p class="lead text-muted">Simple, powerful, and intelligent documentation enhancement in three steps</p>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                                <span class="text-white fw-bold fs-3">1</span>
+                            </div>
+                            <h4 class="text-light mb-3">Search & Resolve</h4>
+                            <p class="text-muted">Use <code>resolve_library_id</code> to find and identify the libraries you need from our extensive Context7 database.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                                <span class="text-white fw-bold fs-3">2</span>
+                            </div>
+                            <h4 class="text-light mb-3">AI Enhancement</h4>
+                            <p class="text-muted">Call <code>get_smart_docs</code> with your context, and our AI models generate comprehensive, practical documentation.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-info rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                                <span class="text-white fw-bold fs-3">3</span>
+                            </div>
+                            <h4 class="text-light mb-3">Get Results</h4>
+                            <p class="text-muted">Receive production-ready documentation with complete code examples, best practices, and integration patterns.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Code Example -->
+                <div class="mt-5">
+                    <h4 class="text-center mb-4 text-light">See It In Action</h4>
+                    <div class="code-block">
+                        <div class="text-success mb-2"># Search for a library</div>
+                        <div class="text-white">await resolve_library_id("next.js")</div>
+                        <div class="text-muted mt-3"># Returns: Available libraries with IDs and descriptions</div>
+                        
+                        <div class="text-success mb-2 mt-4"># Get AI-enhanced documentation</div>
+                        <div class="text-white">await get_smart_docs(</div>
+                        <div class="text-white ms-4">library_id="vercel/next.js",</div>
+                        <div class="text-white ms-4">context="building e-commerce site with auth",</div>
+                        <div class="text-white ms-4">extra_libraries=["supabase/supabase", "stripe/stripe-js"],</div>
+                        <div class="text-white ms-4">model="gemini-2.5-flash"</div>
+                        <div class="text-white">)</div>
+                        <div class="text-muted mt-3"># Returns: Complete integration guide with runnable examples</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- AI Models Section -->
+        <section id="integration" class="py-5">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="display-4 text-primary-emphasis mb-4">Flexible AI Integration</h2>
+                    <p class="lead text-muted">Choose the perfect AI model for your needs</p>
+                </div>
+                
+                <div class="ai-models-grid">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <h4 class="text-primary mb-4">
+                                <i class="bi bi-google me-2"></i>Google Gemini Models
+                            </h4>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item bg-transparent border-secondary">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 text-light">Gemini 2.5 Pro</h6>
+                                            <p class="mb-1 text-muted">Highest quality, comprehensive analysis</p>
+                                        </div>
+                                        <span class="badge bg-warning text-dark">Slowest</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item bg-transparent border-secondary">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 text-light">Gemini 2.5 Flash</h6>
+                                            <p class="mb-1 text-muted">Perfect balance of speed and quality</p>
+                                        </div>
+                                        <span class="badge bg-success">Default</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item bg-transparent border-secondary">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 text-light">Gemini 2.5 Flash Lite</h6>
+                                            <p class="mb-1 text-muted">Lightning fast for quick tasks</p>
+                                        </div>
+                                        <span class="badge bg-primary">Fastest</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <h4 class="text-info mb-4">
+                                <i class="bi bi-robot me-2"></i>OpenAI Models
+                            </h4>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item bg-transparent border-secondary">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 text-light">GPT-4.1</h6>
+                                            <p class="mb-1 text-muted">Premium quality with deep reasoning</p>
+                                        </div>
+                                        <span class="badge bg-warning text-dark">Slowest</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item bg-transparent border-secondary">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 text-light">GPT-4.1 Mini</h6>
+                                            <p class="mb-1 text-muted">Balanced performance for most tasks</p>
+                                        </div>
+                                        <span class="badge bg-success">Recommended</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item bg-transparent border-secondary">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 text-light">GPT-4.1 Nano</h6>
+                                            <p class="mb-1 text-muted">Optimized for speed and efficiency</p>
+                                        </div>
+                                        <span class="badge bg-primary">Fastest</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Models automatically fallback if your preferred choice is unavailable
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Testimonials Section -->
+        <section id="testimonials" class="py-5">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="display-4 text-primary-emphasis mb-4">What Developers Say</h2>
+                    <p class="lead text-muted">Real feedback from teams using ContextS in production</p>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="testimonial-card p-4 h-100">
+                            <div class="mb-3">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                            </div>
+                            <p class="text-light fs-5 mb-4">"ContextS has completely transformed our documentation workflow. The AI-generated examples are incredibly accurate and save us hours of manual work. Our team productivity has increased by 300%."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                    <span class="text-white fw-bold">SJ</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-light">Sarah Johnson</h6>
+                                    <small class="text-muted">Senior Developer at TechCorp</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="testimonial-card p-4 h-100">
+                            <div class="mb-3">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                            </div>
+                            <p class="text-light fs-5 mb-4">"The multi-library integration feature is a game-changer. Instead of piecing together docs from different sources, ContextS gives us complete integration guides. It's like having a senior developer on the team 24/7."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                    <span class="text-white fw-bold">MR</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-light">Mike Rodriguez</h6>
+                                    <small class="text-muted">Lead Engineer at InnovateX</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="testimonial-card p-4 h-100">
+                            <div class="mb-3">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                            </div>
+                            <p class="text-light fs-5 mb-4">"Implementation was incredibly smooth. The FastMCP integration and clear error handling made setup a breeze. We were generating enhanced documentation within 30 minutes of installation."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                    <span class="text-white fw-bold">AL</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-light">Alex Liu</h6>
+                                    <small class="text-muted">DevOps Engineer at CloudScale</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="testimonial-card p-4 h-100">
+                            <div class="mb-3">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                            </div>
+                            <p class="text-light fs-5 mb-4">"The AI model flexibility is perfect. We use Gemini Flash for daily tasks and switch to GPT-4.1 for complex integrations. Having both options gives us the best of both worlds."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                    <span class="text-dark fw-bold">EP</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-light">Emma Parker</h6>
+                                    <small class="text-muted">CTO at StartupFlow</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section id="contact" class="py-5 my-5 animated-bg">
+            <div class="container">
+                <div class="text-center text-white">
+                    <h2 class="display-4 mb-4">Ready to Transform Your Documentation?</h2>
+                    <p class="lead mb-5">Join hundreds of development teams who are revolutionizing their documentation workflow with ContextS MCP Server.</p>
+                    
+                    <div class="row g-3 justify-content-center">
+                        <div class="col-md-auto">
+                            <a href="https://github.com/contexts/mcp-server" class="btn btn-light btn-lg" target="_blank">
+                                <i class="bi bi-github me-2"></i>Get Started on GitHub
+                            </a>
+                        </div>
+                        <div class="col-md-auto">
+                            <a href="mailto:hello@contextsmcp.dev" class="btn btn-outline-light btn-lg">
+                                <i class="bi bi-envelope me-2"></i>Contact Sales
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <small class="text-white-50">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Free and Open Source • Enterprise Support Available • MIT Licensed
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-section py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h5 class="text-light mb-4">
+                        <i class="bi bi-cpu-fill text-primary me-2"></i>ContextS MCP Server
+                    </h5>
+                    <p class="text-muted mb-4">
+                        The next generation documentation enhancement tool powered by AI. 
+                        Transform your development workflow with intelligent, context-aware documentation.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-muted"><i class="bi bi-github fs-5"></i></a>
+                        <a href="#" class="text-muted"><i class="bi bi-twitter fs-5"></i></a>
+                        <a href="#" class="text-muted"><i class="bi bi-linkedin fs-5"></i></a>
+                        <a href="#" class="text-muted"><i class="bi bi-discord fs-5"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-light mb-4">Product</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#features" class="text-muted text-decoration-none">Features</a></li>
+                        <li class="mb-2"><a href="#integration" class="text-muted text-decoration-none">Integration</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Pricing</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Changelog</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-light mb-4">Developers</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Documentation</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">API Reference</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Examples</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Community</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-light mb-4">Support</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Help Center</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Status Page</a></li>
+                        <li class="mb-2"><a href="#contact" class="text-muted text-decoration-none">Contact</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Bug Reports</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-light mb-4">Legal</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Privacy</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Terms</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Security</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">License</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="my-4 border-secondary">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        &copy; 2024 ContextS MCP Server. All rights reserved.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        Made with <i class="bi bi-heart-fill text-danger"></i> for developers
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const offsetTop = target.offsetTop - 70; // Account for fixed navbar
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Navbar background transition on scroll
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(33, 37, 41, 0.95)';
+                navbar.style.backdropFilter = 'blur(10px)';
+            } else {
+                navbar.style.background = '';
+                navbar.style.backdropFilter = '';
+            }
+        });
+
+        // Animate stats counter on scroll
+        const counters = document.querySelectorAll('.stats-counter');
+        let animated = false;
+
+        function animateCounters() {
+            counters.forEach(counter => {
+                const target = parseInt(counter.innerText.replace(/\D/g, ''));
+                const suffix = counter.innerText.replace(/\d/g, '');
+                let current = 0;
+                const increment = target / 50;
+                
+                const updateCounter = () => {
+                    if (current < target) {
+                        current += increment;
+                        counter.innerText = Math.ceil(current) + suffix;
+                        setTimeout(updateCounter, 40);
+                    } else {
+                        counter.innerText = target + suffix;
+                    }
+                };
+                
+                updateCounter();
+            });
+        }
+
+        window.addEventListener('scroll', function() {
+            if (!animated && window.scrollY > 200) {
+                animateCounters();
+                animated = true;
+            }
+        });
+    </script>
+</body>
+</html>
