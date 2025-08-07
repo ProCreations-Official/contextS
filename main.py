@@ -52,7 +52,7 @@ def get_available_models() -> dict:
     if GEMINI_AVAILABLE:
         available["gemini"] = [
             "gemini-2.5-pro",      # Slowest, highest quality
-            "gemini-2.5-flash",    # Default for Gemini, good balance  
+            "gemini-2.5-flash",    # Default for Gemini, good balance
             "gemini-2.5-flash-lite" # Fastest, worst quality
         ]
     
@@ -115,7 +115,7 @@ mcp = FastMCP("ContextS")
 
 @mcp.tool()
 async def resolve_library_id(query: str) -> str:
-    """Search for libraries and get Context7-compatible IDs.
+    """Search for libraries and get search results.
     
     Args:
         query: Library name to search for (e.g., 'next.js', 'supabase')
@@ -187,8 +187,8 @@ async def get_smart_docs(
     For multi-library integration help, use extra_libraries when your project needs multiple libraries working together.
     
     Args:
-        library_id: Context7-compatible library ID for your primary/main library (e.g., 'vercel/next.js', 'mongodb/docs')
-        context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations
+        library_id: The library ID for your primary/main library (e.g., 'vercel/next.js', 'mongodb/docs')
+        context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations.
         topic: OPTIONAL - Specific topic to focus documentation on (e.g., 'routing', 'authentication', 'setup')
         tokens: OPTIONAL - Maximum tokens to retrieve per library (default: 150000, capped at 200k)
         version: Optional specific version for the main library (e.g., 'v14.3.0-canary.87')
@@ -196,7 +196,7 @@ async def get_smart_docs(
         extra_libraries: ONLY use when you need help integrating MULTIPLE libraries together. List of up to 2 additional library IDs. Example: if building a Next.js app with Supabase auth and Tailwind styling, use library_id="vercel/next.js" and extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"]
     
     Returns:
-        AI-enhanced documentation with practical code examples. If extra_libraries provided, includes integration patterns showing how the libraries work together.
+        AI-enhanced documentation with practical code examples and guidance, based on what you entered in 'context'. If extra_libraries provided, includes integration patterns showing how the libraries work together.
     
     Examples:
         # Single library - just learning Next.js routing
@@ -346,7 +346,7 @@ async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, topic
             additional_libs = [lib for lib in libraries_list if lib != main_library_id]
             prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
 
-**Context:** {context}
+**Context (what the user needs):** {context}
 **Primary Library:** {main_library_id}
 **Integration Libraries:** {', '.join(additional_libs)}
 **Focus:** {topic or "complete integration guide"}
@@ -360,6 +360,7 @@ Create a definitive integration guide that shows exactly how to use {main_librar
 - Explained with clear reasoning
 - Focused on real-world implementation
 - Optimized for the user's specific context
+- Answers any questions the user has in 'context'
 
 **Required Structure:**
 
@@ -400,7 +401,7 @@ Make this the definitive resource for using these libraries together."""
             # Single library prompt
             prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
 
-**Context:** {context}
+**Context (what the user needs):** {context}
 **Library:** {main_library_id}
 **Focus:** {topic or "complete implementation guide"}
 
