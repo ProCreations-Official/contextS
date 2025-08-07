@@ -115,7 +115,7 @@ mcp = FastMCP("ContextS")
 
 @mcp.tool()
 async def resolve_library_id(query: str) -> str:
-    """Search for libraries and get Context7-compatible IDs.
+    """Search for libraries and get search results.
     
     Args:
         query: Library name to search for (e.g., 'next.js', 'supabase')
