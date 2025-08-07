@@ -1,0 +1,3 @@
+- Prompt: "In an artifact, output me a new website showing just how important open source AI is. It features a wonderful design with animations and great visuals on why open source AI models matter so much. Use ContextS to get documentation on your library of choice to make the website look good. When using ContextS, use the gemini-2.5-flash-lite model. Use 150000 tokens with contextS. It features both boostrap and three.js for 3d visuals and wonderful design."
+- Model: Claude Opus 4.1
+- Agent: None, using Claude Desktop

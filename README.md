@@ -111,6 +111,13 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
+#### For Claude Code
+
+Run this command:
+
+```claude mcp add contextS python3 /path/to/ContextS/main.py  --env GEMINI_API_KEY=your-gemini-api-key-here OPENAI_API_KEY=your-openai-api-key-here```
+
+
 #### For Cursor IDE
 
 Add to your MCP configuration:

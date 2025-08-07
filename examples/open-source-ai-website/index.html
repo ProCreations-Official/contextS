@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Source AI - The Future is Collaborative</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* Three.js Canvas Background */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.8;
+        }
+
+        /* Animated gradient overlay */
+        .gradient-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(270deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3), rgba(237, 137, 54, 0.3));
+            background-size: 600% 600%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(20, 20, 40, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .nav-link {
+            color: #ffffff !important;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 1rem !important;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover::after {
+            width: 80%;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            color: #667eea !important;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 80px 0;
+        }
+
+        .hero-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 60px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: translateY(0);
+            animation: float 6s ease-in-out infinite;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+            animation: slideInFromTop 1s ease-out;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            animation: slideInFromBottom 1s ease-out 0.3s both;
+        }
+
+        @keyframes slideInFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Buttons */
+        .btn-glow {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-glow:hover::before {
+            left: 100%;
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-outline-glow {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+            background: transparent;
+            color: white;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        .btn-outline-glow:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Feature Cards */
+        .features-section {
+            padding: 100px 0;
+            position: relative;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.3) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .feature-title {
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .feature-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 80px 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 30px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .cta-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 60px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cta-title {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .cta-description {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(20, 20, 40, 0.95);
+            padding: 40px 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .hero-content {
+                padding: 40px 20px;
+            }
+            
+            .feature-card {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Three.js Canvas Container -->
+    <div id="canvas-container"></div>
+    <div class="gradient-overlay"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">🚀 OpenAI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#stats">Impact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#join">Join Us</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="hero-content text-center">
+                        <h1 class="hero-title">Open Source AI</h1>
+                        <p class="hero-subtitle">Democratizing Intelligence for Everyone</p>
+                        <p class="text-white mb-4" style="font-size: 1.1rem;">
+                            When AI development happens in the open, humanity wins. Join thousands of developers, 
+                            researchers, and innovators building the future of artificial intelligence together.
+                        </p>
+                        <div>
+                            <button class="btn-glow">Explore Models</button>
+                            <button class="btn-outline-glow">Contribute</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-4 text-white fw-bold mb-3">Why Open Source AI Matters</h2>
+                <p class="text-white fs-5">Building a transparent, accessible, and collaborative future</p>
+            </div>
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4 reveal">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3 class="feature-title">Transparency</h3>
+                        <p class="feature-description">
+                            Open source models allow complete inspection of algorithms, training data, and decision processes. 
+                            This transparency builds trust and enables the identification and correction of biases.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4 reveal">
+                    <div class="feature-card">
+                        <div class="feature-icon">🤝</div>
+                        <h3 class="feature-title">Collaboration</h3>
+                        <p class="feature-description">
+                            Developers worldwide contribute improvements, share insights, and build upon each other's work. 
+                            This collective intelligence accelerates innovation beyond what any single organization could achieve.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4 reveal">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3 class="feature-title">Accessibility</h3>
+                        <p class="feature-description">
+                            Removing barriers to AI technology empowers startups, researchers, and educators. 
+                            Everyone gets access to state-of-the-art models without prohibitive costs.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4 reveal">
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <h3 class="feature-title">Security</h3>
+                        <p class="feature-description">
+                            Community-driven security audits and rapid patching make open source AI more resilient. 
+                            Many eyes reviewing code means vulnerabilities are found and fixed faster.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4 reveal">
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <h3 class="feature-title">Innovation</h3>
+                        <p class="feature-description">
+                            Open competition and experimentation drive breakthrough discoveries. 
+                            The freedom to modify and experiment leads to unexpected innovations and applications.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4 reveal">
+                    <div class="feature-card">
+                        <div class="feature-icon">🌍</div>
+                        <h3 class="feature-title">Global Impact</h3>
+                        <p class="feature-description">
+                            Democratized AI enables solutions for local challenges worldwide. 
+                            Communities can adapt models to their specific needs, languages, and contexts.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-box">
+                        <div class="stat-number" data-target="50000">0</div>
+                        <div class="stat-label">Contributors</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-box">
+                        <div class="stat-number" data-target="1200">0</div>
+                        <div class="stat-label">Open Models</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-box">
+                        <div class="stat-number" data-target="180">0</div>
+                        <div class="stat-label">Countries</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-box">
+                        <div class="stat-number" data-target="10">0</div>
+                        <div class="stat-label">Million Users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="join" class="cta-section">
+        <div class="container">
+            <div class="cta-box reveal">
+                <h2 class="cta-title">Join the Revolution</h2>
+                <p class="cta-description">
+                    Be part of the movement that's making AI accessible, transparent, and beneficial for all humanity.
+                    Whether you're a developer, researcher, or enthusiast, there's a place for you in our community.
+                </p>
+                <button class="btn-glow" data-bs-toggle="modal" data-bs-target="#joinModal">Get Started Today</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Open Source AI Initiative. Building the future together.</p>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal fade" id="joinModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: rgba(30, 30, 60, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">Welcome to the Future</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-white">
+                    <p>Open source AI represents the democratization of one of humanity's most powerful technologies. Here's how you can contribute:</p>
+                    <ul>
+                        <li>🔬 <strong>Research:</strong> Contribute to cutting-edge AI research</li>
+                        <li>💻 <strong>Development:</strong> Build and improve open models</li>
+                        <li>📚 <strong>Documentation:</strong> Help others understand and use AI</li>
+                        <li>🌍 <strong>Community:</strong> Share knowledge and collaborate globally</li>
+                    </ul>
+                    <p class="mt-3">Every contribution, no matter how small, pushes humanity forward.</p>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn-glow">Start Contributing</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Three.js Scene -->
+    <script>
+        // Three.js Scene Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(10, 10, 10);
+        scene.add(pointLight);
+
+        // Create floating neural network nodes
+        const nodeGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+        const nodeMaterial = new THREE.MeshPhongMaterial({
+            color: 0x667eea,
+            emissive: 0x667eea,
+            emissiveIntensity: 0.5,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const nodes = [];
+        const nodeCount = 20;
+        
+        for (let i = 0; i < nodeCount; i++) {
+            const node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+            node.position.x = (Math.random() - 0.5) * 30;
+            node.position.y = (Math.random() - 0.5) * 30;
+            node.position.z = (Math.random() - 0.5) * 30;
+            node.userData = {
+                velocity: new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.02,
+                    (Math.random() - 0.5) * 0.02,
+                    (Math.random() - 0.5) * 0.02
+                )
+            };
+            nodes.push(node);
+            scene.add(node);
+        }
+
+        // Create connections between nodes
+        const connectionMaterial = new THREE.LineBasicMaterial({
+            color: 0x764ba2,
+            transparent: true,
+            opacity: 0.3
+        });
+
+        const connections = [];
+        for (let i = 0; i < nodeCount; i++) {
+            for (let j = i + 1; j < nodeCount; j++) {
+                if (Math.random() > 0.8) {
+                    const points = [];
+                    points.push(nodes[i].position);
+                    points.push(nodes[j].position);
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, connectionMaterial);
+                    connections.push({ line, start: nodes[i], end: nodes[j] });
+                    scene.add(line);
+                }
+            }
+        }
+
+        // Particle system
+        const particleCount = 500;
+        const particleGeometry = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        const particleVelocities = [];
+
+        for (let i = 0; i < particleCount; i++) {
+            particlePositions[i * 3] = (Math.random() - 0.5) * 50;
+            particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+            particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+            
+            particleVelocities.push({
+                x: (Math.random() - 0.5) * 0.05,
+                y: (Math.random() - 0.5) * 0.05,
+                z: (Math.random() - 0.5) * 0.05
+            });
+        }
+
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.6
+        });
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particles);
+
+        camera.position.z = 30;
+
+        // Animation
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate camera based on mouse
+            camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;
+            camera.position.y += (mouseY * 5 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+
+            // Animate nodes
+            nodes.forEach((node, index) => {
+                node.position.add(node.userData.velocity);
+                
+                // Bounce off boundaries
+                if (Math.abs(node.position.x) > 15) node.userData.velocity.x *= -1;
+                if (Math.abs(node.position.y) > 15) node.userData.velocity.y *= -1;
+                if (Math.abs(node.position.z) > 15) node.userData.velocity.z *= -1;
+                
+                // Pulsing effect
+                const scale = 1 + Math.sin(Date.now() * 0.001 + index) * 0.2;
+                node.scale.set(scale, scale, scale);
+            });
+
+            // Update connections
+            connections.forEach(conn => {
+                const points = [];
+                points.push(conn.start.position);
+                points.push(conn.end.position);
+                conn.line.geometry.setFromPoints(points);
+            });
+
+            // Animate particles
+            const positions = particles.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] += particleVelocities[i].x;
+                positions[i * 3 + 1] += particleVelocities[i].y;
+                positions[i * 3 + 2] += particleVelocities[i].z;
+
+                // Wrap around
+                if (Math.abs(positions[i * 3]) > 25) positions[i * 3] *= -1;
+                if (Math.abs(positions[i * 3 + 1]) > 25) positions[i * 3 + 1] *= -1;
+                if (Math.abs(positions[i * 3 + 2]) > 25) positions[i * 3 + 2] *= -1;
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Scroll reveal animation
+        const reveals = document.querySelectorAll('.reveal');
+        
+        function checkReveal() {
+            reveals.forEach(element => {
+                const windowHeight = window.innerHeight;
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < windowHeight - elementVisible) {
+                    element.classList.add('active');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', checkReveal);
+        checkReveal();
+
+        // Counter animation
+        const counters = document.querySelectorAll('.stat-number');
+        const speed = 200;
+        
+        const animateCounters = () => {
+            counters.forEach(counter => {
+                const updateCount = () => {
+                    const target = +counter.getAttribute('data-target');
+                    const count = +counter.innerText;
+                    const inc = target / speed;
+                    
+                    if (count < target) {
+                        counter.innerText = Math.ceil(count + inc);
+                        setTimeout(updateCount, 1);
+                    } else {
+                        counter.innerText = target;
+                        if (target === 10) {
+                            counter.innerText += 'M+';
+                        } else if (target === 50000) {
+                            counter.innerText = '50K+';
+                        } else if (target === 1200) {
+                            counter.innerText = '1.2K+';
+                        } else if (target === 180) {
+                            counter.innerText = '180+';
+                        }
+                    }
+                };
+                updateCount();
+            });
+        };
+
+        // Trigger counter animation when stats section is visible
+        const statsSection = document.querySelector('.stats-section');
+        let hasAnimated = false;
+
+        const observerOptions = {
+            threshold: 0.5
+        };
+
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !hasAnimated) {
+                    animateCounters();
+                    hasAnimated = true;
+                }
+            });
+        }, observerOptions);
+
+        statsObserver.observe(statsSection);
+    </script>
+</body>
+</html>
