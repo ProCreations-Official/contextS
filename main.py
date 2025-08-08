@@ -189,7 +189,7 @@ async def get_smart_docs(
     Args:
         library_id: The library ID for your primary/main library (e.g., 'vercel/next.js', 'mongodb/docs')
         context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations. Note that this is what the internal AI powering this tool will give you documentation on or help you with code based on this parameter. Be comprehensive and give full detail about what you need.
-        topic: OPTIONAL - Specific topic to focus documentation on (e.g., 'routing', 'authentication', 'setup'). Not recommended to set, as 'context' is normally enough, and this can sometimes hurt performance.
+        topic: OPTIONAL - Specific topic to focus documentation on (e.g., 'routing', 'authentication', 'setup'). Not recommended to set, as 'context' is normally enough, and this can often hurt performance. Do not use unless explicitly told to, by the user.
         tokens: OPTIONAL - Maximum tokens to retrieve per library (default: 150000, capped at 200k). Please note that this is the number of tokens the internal AI powering this tool will recive of documentation to assist you, so we recommend either not setting this value (will use default), or set a high number, capped at 200000.
         version: Optional specific version for the main library (e.g., 'v14.3.0-canary.87')
         model: {generate_model_description()}
