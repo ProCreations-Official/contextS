@@ -175,7 +175,6 @@ async def resolve_library_id(query: str) -> str:
 async def get_smart_docs(
     library_id: str,
     context: str,
-    topic: Optional[str] = None,
     tokens: int = 150000,
     version: Optional[str] = None,
     model: Optional[str] = None,
@@ -188,9 +187,8 @@ async def get_smart_docs(
     
     Args:
         library_id: The library ID for your primary/main library (e.g., 'vercel/next.js', 'mongodb/docs')
-        context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations.
-        topic: OPTIONAL - Specific topic to focus documentation on (e.g., 'routing', 'authentication', 'setup')
-        tokens: OPTIONAL - Maximum tokens to retrieve per library (default: 150000, capped at 200k)
+        context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations. Note that this is what the internal AI powering this tool will give you documentation on or help you with code based on this parameter. Be comprehensive and give full detail about what you need.
+        tokens: OPTIONAL - Maximum tokens to retrieve per library (default: 150000, capped at 200k). Please note that this is the number of tokens the internal AI powering this tool will recive of documentation to assist you, so we recommend either not setting this value (will use default), or set a high number, capped at 200000.
         version: Optional specific version for the main library (e.g., 'v14.3.0-canary.87')
         model: {generate_model_description()}
         extra_libraries: ONLY use when you need help integrating MULTIPLE libraries together. List of up to 2 additional library IDs. Example: if building a Next.js app with Supabase auth and Tailwind styling, use library_id="vercel/next.js" and extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"]
@@ -247,7 +245,7 @@ async def get_smart_docs(
     
     try:
         # Fetch documentation for main library
-        main_docs, main_error = await _fetch_library_docs(library_id, topic, tokens, version)
+        main_docs, main_error = await _fetch_library_docs(library_id, tokens, version)
         if main_error:
             return main_error
         
@@ -257,7 +255,7 @@ async def get_smart_docs(
         # Fetch documentation for extra libraries if provided
         if extra_libraries:
             for extra_lib in extra_libraries:
-                extra_docs, extra_error = await _fetch_library_docs(extra_lib, topic, tokens, None)  # No version for extra libs
+                extra_docs, extra_error = await _fetch_library_docs(extra_lib, tokens, None)  # No version for extra libs
                 if extra_error:
                     # Include partial results with error message
                     all_docs[extra_lib] = f"[ERROR: {extra_error}]"
@@ -265,13 +263,13 @@ async def get_smart_docs(
                     all_docs[extra_lib] = extra_docs
         
         # Enhance with AI (Gemini or OpenAI based on availability and model selection)
-        enhanced_docs = await enhance_with_ai(all_docs, library_id, topic, context, model)
+        enhanced_docs = await enhance_with_ai(all_docs, library_id, context, model)
         return enhanced_docs
         
     except Exception as e:
         return f"Error: {str(e)}"
 
-async def _fetch_library_docs(library_id: str, topic: Optional[str], tokens: int, version: Optional[str]) -> tuple[str, str]:
+async def _fetch_library_docs(library_id: str, tokens: int, version: Optional[str]) -> tuple[str, str]:
     """Fetch documentation for a single library from Context7.
     
     Returns:
@@ -291,8 +289,6 @@ async def _fetch_library_docs(library_id: str, topic: Optional[str], tokens: int
             "tokens": min(tokens, 200000)  # Cap at 200k tokens
         }
         
-        if topic:
-            params["topic"] = topic
         
         headers = {
             "Content-Type": "application/json",
@@ -314,7 +310,7 @@ async def _fetch_library_docs(library_id: str, topic: Optional[str], tokens: int
     except Exception as e:
         return "", f"Error fetching docs for '{library_id}': {str(e)}"
 
-async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, topic: Optional[str], context: str, selected_model: Optional[str] = None) -> str:
+async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, context: str, selected_model: Optional[str] = None) -> str:
     """Enhance documentation with AI-powered insights and code examples."""
     
     # Determine which model to use based on availability and preference
@@ -349,7 +345,7 @@ async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, topic
 **Context (what the user needs):** {context}
 **Primary Library:** {main_library_id}
 **Integration Libraries:** {', '.join(additional_libs)}
-**Focus:** {topic or "complete integration guide"}
+**Focus:** complete integration guide
 
 **Source Documentation:**
 {all_docs_text}
@@ -403,7 +399,7 @@ Make this the definitive resource for using these libraries together."""
 
 **Context (what the user needs):** {context}
 **Library:** {main_library_id}
-**Focus:** {topic or "complete implementation guide"}
+**Focus:** complete implementation guide
 
 **Source Documentation:**
 {all_docs_text}

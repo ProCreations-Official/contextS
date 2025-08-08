@@ -18,7 +18,6 @@
 - **Model Selection**: Pick the right model for speed vs quality tradeoffs
 - **Library Search**: Find the right library IDs for any package
 - **Version-Specific Docs**: Get documentation for specific library versions
-- **Topic Filtering**: Focus on specific areas like routing, authentication, etc.
 - **Context-Aware**: Provide project details to get highly relevant examples
 - **Up-to-Date Content**: Powered by Context7's real-time documentation database
 - **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients
@@ -190,7 +189,6 @@ get_smart_docs(
 **Parameters**:
 - `library_id` (required): Context7-compatible library ID for your main/primary library
 - `context` (required): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs
-- `topic` (optional): Focus area (e.g., "routing", "authentication")
 - `tokens` (optional): Max tokens to retrieve per library (default: 200,000)
 - `version` (optional): Specific version for main library (e.g., "v14.3.0-canary.87")
 - `model` (optional): AI model to use for enhancement. Options:
@@ -211,7 +209,6 @@ resolve_library_id(query="next.js")
 get_smart_docs(
     library_id="vercel/next.js",
     context="I want to create dynamic blog post pages with Next.js, including slug-based routing, metadata generation, and static generation for better performance",
-    topic="routing",
     model="gemini-2.5-flash"
 )
 ```
@@ -226,7 +223,6 @@ resolve_library_id(query="supabase")
 get_smart_docs(
     library_id="supabase/supabase",
     context="implementing user login and signup with Supabase Auth, including social providers, email verification, password reset, and role-based access control",
-    topic="authentication",
     model="gpt-4.1-mini"
 )
 ```
@@ -318,7 +314,7 @@ The AI enhancement includes:
 ### Context7 Endpoints Used
 
 - `GET /api/v1/search?query={query}` - Search libraries
-- `GET /api/v1/{library_id}?type=txt&tokens={tokens}&topic={topic}` - Get docs
+- `GET /api/v1/{library_id}?type=txt&tokens={tokens}` - Get docs
 
 ### Library ID Format
 
