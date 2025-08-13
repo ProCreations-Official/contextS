@@ -8,7 +8,7 @@
 
 </div>
 
-**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance. The "S" stands for **Smart** - it supports both Google Gemini and OpenAI models to provide targeted, practical documentation with working code examples tailored to your specific needs.
+**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance. The "S" stands for **Smart** - it supports Google Gemini, OpenAI ChatGPT, and Anthropic Claude models to provide targeted, practical documentation with working code examples tailored to your specific needs.
 
 ## Features
 
@@ -145,7 +145,7 @@ Add to your MCP configuration:
       "env": {
         "GEMINI_API_KEY": "your-gemini-api-key-here",
         "OPENAI_API_KEY": "your-openai-api-key-here",
-        "ANTRHOPIC_API_KEY": "your-anthropic-api-key-here"
+        "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
       }
     }
   }
@@ -160,9 +160,9 @@ Follow your client's MCP server configuration documentation, using:
 - **Environment**: Include the API keys you have configured:
   ```json
   {
-    "GEMINI_API_KEY": "your-gemini-api-key-here",
-    "OPENAI_API_KEY": "your-openai-api-key-here"
-    "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
+  "GEMINI_API_KEY": "your-gemini-api-key-here",
+  "OPENAI_API_KEY": "your-openai-api-key-here",
+  "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
   }
   ```
 
