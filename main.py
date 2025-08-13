@@ -19,6 +19,13 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
+# Try to import Anthropic (optional dependency)
+try:
+    from anthropic import AsyncAnthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Initialize AI services (at least one is required)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 # Configure Gemini if available
 GEMINI_AVAILABLE = bool(GEMINI_API_KEY)
@@ -33,9 +41,9 @@ if GEMINI_AVAILABLE:
     genai.configure(api_key=GEMINI_API_KEY)
 
 # Validate that at least one AI service is configured
-if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY)):
+if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY) or (ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY)):
     raise ValueError(
-        "At least one AI service must be configured. Set GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
+        "At least one AI service must be configured. Set GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY environment variables."
     )
     
 # Context7 API base URL
@@ -46,7 +54,8 @@ def get_available_models() -> dict:
     """Get available AI models based on configured API keys."""
     available = {
         "gemini": [],
-        "openai": []
+        "openai": [],
+        "anthropic": []
     }
     
     if GEMINI_AVAILABLE:
@@ -62,6 +71,11 @@ def get_available_models() -> dict:
             "gpt-4.1-mini", # Balance of speed and quality
             "gpt-4.1-nano"  # Fastest, worst quality
         ]
+
+    if ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
+        available["anthropic"] = [
+            "claude-sonnet-4-20250514" # 1M context window
+        ]
     
     return available
 
@@ -71,14 +85,15 @@ def get_all_available_models() -> list:
     all_models = []
     all_models.extend(available["gemini"])
     all_models.extend(available["openai"])
+    all_models.extend(available["anthropic"])
     return all_models
 
 def generate_model_description() -> str:
     """Generate dynamic model parameter description based on available models."""
     available = get_available_models()
     
-    if not available["gemini"] and not available["openai"]:
-        return "No AI models available. Please configure GEMINI_API_KEY and/or OPENAI_API_KEY."
+    if not available["gemini"] and not available["openai"] and not available["anthropic"]:
+        return "No AI models available. Please configure GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY."
     
     description = "Optional AI model to use. Available options:\n"
     
@@ -101,12 +116,20 @@ def generate_model_description() -> str:
                 description += f'               - "{model}": Balance of speed and quality\n'
             elif model == "gpt-4.1-nano":
                 description += f'               - "{model}": Fastest, worst quality\n'
+
+    if available["anthropic"]:
+        description += "\nAnthropic models (require ANTHROPIC_API_KEY):\n"
+        for model in available["anthropic"]:
+            if model == "claude-sonnet-4-20250514":
+                description += f'               - "{model}": 1M context window\n'
     
     # Set default
     if available["gemini"]:
         description += f'\n               If not specified, will use "gemini-2.5-flash".'
     elif available["openai"]:
         description += f'\n               If not specified, will use "gpt-4.1".'
+    elif available["anthropic"]:
+        description += f'\n               If not specified, will use "claude-sonnet-4-20250514".'
     
     return description
 
@@ -226,20 +249,25 @@ async def get_smart_docs(
     if model:
         available_models = get_all_available_models()
         if not available_models:
-            return "Error: No AI models configured. Please set up GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
+            return "Error: No AI models configured. Please set up GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY environment variables."
         
         if model not in available_models:
             # Provide specific error messages based on model type
             if model.startswith("gemini"):
                 if not GEMINI_AVAILABLE:
-                    return f"Error: Gemini model '{model}' requested but GEMINI_API_KEY not configured. Please set up Gemini API or try an OpenAI model if available."
+                    return f"Error: Gemini model '{model}' requested but GEMINI_API_KEY not configured. Please set up Gemini API or try an OpenAI or Anthropic model if available."
                 else:
                     return f"Error: Unknown Gemini model '{model}'. Available Gemini models: {', '.join([m for m in available_models if m.startswith('gemini')])}."
             elif model.startswith("gpt"):
                 if not (OPENAI_AVAILABLE and OPENAI_API_KEY):
-                    return f"Error: OpenAI model '{model}' requested but OpenAI API not configured. Please set up OPENAI_API_KEY or try a Gemini model if available."
+                    return f"Error: OpenAI model '{model}' requested but OpenAI API not configured. Please set up OPENAI_API_KEY or try a Gemini or Anthropic model if available."
                 else:
                     return f"Error: Unknown OpenAI model '{model}'. Available OpenAI models: {', '.join([m for m in available_models if m.startswith('gpt')])}."
+            elif model.startswith("claude"):
+                if not (ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY):
+                    return f"Error: Anthropic model '{model}' requested but Anthropic API not configured. Please set up ANTHROPIC_API_KEY or try a Gemini or OpenAI model if available."
+                else:
+                    return f"Error: Unknown Anthropic model '{model}'. Available Anthropic models: {', '.join([m for m in available_models if m.startswith('claude')])}."
             else:
                 return f"Error: Unknown model '{model}'. Available models: {', '.join(available_models)}."
     
@@ -454,6 +482,8 @@ Make this THE resource developers need to master {main_library_id} for their spe
             return await _enhance_with_gemini(prompt, model_to_use, main_library_id, main_docs)
         elif model_to_use.startswith("gpt"):
             return await _enhance_with_openai(prompt, model_to_use, main_library_id, main_docs)
+        elif model_to_use.startswith("claude"):
+            return await _enhance_with_anthropic(prompt, model_to_use, main_library_id, main_docs)
         else:
             return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*Unsupported model: {model_to_use}*"
             
@@ -474,7 +504,7 @@ async def _determine_ai_model(requested_model: Optional[str]) -> tuple[Optional[
         available_models = get_all_available_models()
         
         if not available_models:
-            return None, "No AI models configured. Please set up GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
+            return None, "No AI models configured. Please set up GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY environment variables."
         
         if requested_model not in available_models:
             if requested_model.startswith("gemini"):
@@ -489,19 +519,27 @@ async def _determine_ai_model(requested_model: Optional[str]) -> tuple[Optional[
                 else:
                     openai_models = [m for m in available_models if m.startswith('gpt')]
                     return None, f"Unknown OpenAI model '{requested_model}'. Available OpenAI models: {', '.join(openai_models)}."
+            elif requested_model.startswith("claude"):
+                if not (ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY):
+                    return None, f"Anthropic model '{requested_model}' requested but ANTHROPIC_API_KEY not configured. Please set up Anthropic API."
+                else:
+                    anthropic_models = [m for m in available_models if m.startswith('claude')]
+                    return None, f"Unknown Anthropic model '{requested_model}'. Available Anthropic models: {', '.join(anthropic_models)}."
             else:
                 return None, f"Unknown model '{requested_model}'. Available models: {', '.join(available_models)}."
         
         # Requested model is available
         return requested_model, None
     
-    # No specific model requested, use default priority: Gemini first, then OpenAI
+    # No specific model requested, use default priority: Gemini, then OpenAI, then Anthropic
     if GEMINI_AVAILABLE:
         return "gemini-2.5-flash", None
     elif OPENAI_AVAILABLE and OPENAI_API_KEY:
         return "gpt-4.1", None
+    elif ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
+        return "claude-sonnet-4-20250514", None
     
-    return None, "No AI models configured. Please set up GEMINI_API_KEY and/or OPENAI_API_KEY environment variables."
+    return None, "No AI models configured. Please set up GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY environment variables."
 
 
 async def _enhance_with_gemini(prompt: str, model_name: str, library_id: str, docs: str) -> str:
@@ -562,6 +600,34 @@ async def _enhance_with_openai(prompt: str, model_name: str, library_id: str, do
             
     except Exception as e:
         logger.error(f"OpenAI enhancement failed: {e}")
+        raise
+
+
+async def _enhance_with_anthropic(prompt: str, model_name: str, library_id: str, docs: str) -> str:
+    """Enhance documentation using Anthropic."""
+    try:
+        # Create async Anthropic client
+        client = AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+
+        # Generate enhanced documentation
+        response = await client.beta.messages.create(
+            model=model_name,
+            max_tokens=4096,  # Adjust as needed
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            betas=["context-1m-2025-08-07"]
+        )
+
+        await client.close()
+
+        if response and response.content and response.content[0].text:
+            return response.content[0].text
+        else:
+            return f"# Documentation for {library_id}\n\n{docs}\n\n*Anthropic enhancement unavailable at the moment.*"
+
+    except Exception as e:
+        logger.error(f"Anthropic enhancement failed: {e}")
         raise
 
 
