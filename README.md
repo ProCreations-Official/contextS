@@ -43,7 +43,10 @@ ContextS supports both **Google Gemini** and **OpenAI** models:
 - `gpt-4.1-mini` - Balanced speed and quality
 - `gpt-4.1-nano` - Fastest, lower quality
 
-**Intelligent Fallback**: If both APIs are configured, ContextS defaults to Gemini 2.5 Flash, then falls back to GPT-4.1 if needed.
+#### Anthropic Models  
+- `claude-sonnet-4-20250514` with 1 million token context length (in beta) - Balanced speed and quality
+
+**Intelligent Fallback**: If all APIs are configured, ContextS defaults to Gemini 2.5 Flash, then falls back to GPT-4.1, and finally tries Claude Sonnet 4 1m before giving up.
 ## Installation
 
 ### Step 1: Clone and Setup
@@ -61,7 +64,7 @@ pip install -r requirements.txt
 
 You need **at least one** of the following API keys:
 
-#### Option A: Google Gemini (Recommended)
+#### Option A: Google Gemini
 1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. Create a new API key
 3. Set the environment variable:
@@ -79,12 +82,22 @@ export GEMINI_API_KEY="your-gemini-api-key-here"
 export OPENAI_API_KEY="your-openai-api-key-here"
 ```
 
-#### Option C: Both APIs (Best Experience)
-For maximum reliability, configure both:
+#### Option C: Anthropic
+1. Go to [Anthropic Console API key settings](https://console.anthropic.com/settings/keys)
+2. Create a new API key
+3. Set the environment variable:
+
+```bash
+export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
+```
+
+#### Option C: All APIs (Best Experience)
+For maximum reliability, configure all:
 
 ```bash
 export GEMINI_API_KEY="your-gemini-api-key-here"
 export OPENAI_API_KEY="your-openai-api-key-here"
+export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
 ```
 
 **Note**: ContextS requires at least one AI API key to function. The server will not start without AI capabilities.
@@ -103,7 +116,9 @@ Add to your `claude_desktop_config.json`:
       "args": ["/path/to/ContextS/main.py"],
       "env": {
         "GEMINI_API_KEY": "your-gemini-api-key-here",
-        "OPENAI_API_KEY": "your-openai-api-key-here"
+        "OPENAI_API_KEY": "your-openai-api-key-here",
+        "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
+
       }
     }
   }
@@ -114,7 +129,7 @@ Add to your `claude_desktop_config.json`:
 
 Run this command:
 
-```claude mcp add contextS python3 /path/to/ContextS/main.py  --env GEMINI_API_KEY=your-gemini-api-key-here OPENAI_API_KEY=your-openai-api-key-here```
+```claude mcp add contextS python3 /path/to/ContextS/main.py  --env GEMINI_API_KEY=your-gemini-api-key-here OPENAI_API_KEY=your-openai-api-key-here ANTHROPIC_API_KEY=your-anthropic-api-key-here```
 
 
 #### For Cursor IDE
@@ -129,7 +144,8 @@ Add to your MCP configuration:
       "args": ["/path/to/ContextS/main.py"],
       "env": {
         "GEMINI_API_KEY": "your-gemini-api-key-here",
-        "OPENAI_API_KEY": "your-openai-api-key-here"
+        "OPENAI_API_KEY": "your-openai-api-key-here",
+        "ANTRHOPIC_API_KEY": "your-anthropic-api-key-here"
       }
     }
   }
@@ -146,10 +162,11 @@ Follow your client's MCP server configuration documentation, using:
   {
     "GEMINI_API_KEY": "your-gemini-api-key-here",
     "OPENAI_API_KEY": "your-openai-api-key-here"
+    "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
   }
   ```
 
-**Note**: You only need to include the API keys you have. If you only have Gemini, just include `GEMINI_API_KEY`. If you only have OpenAI, just include `OPENAI_API_KEY`.
+**Note**: You only need to include the API keys you have. If you only have Gemini, just include `GEMINI_API_KEY`. If you only have OpenAI, just include `OPENAI_API_KEY`. If you only have Anthropic, just include `ANTHROPIC_API_KEY`.
 
 ## Usage
 
@@ -194,7 +211,8 @@ get_smart_docs(
 - `model` (optional): AI model to use for enhancement. Options:
   - **Gemini Models**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
   - **OpenAI Models**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
-  - If not specified, uses intelligent fallback (Gemini 2.5 Flash → GPT-4.1)
+  - **Anthropic Models**: `claude-sonnet-4-20250514` with 1M token context (beta)
+  - If not specified, uses fallback (Gemini 2.5 Flash → GPT-4.1 → Sonnet 4 1M)
 - `extra_libraries` (optional): **ONLY use when you need help with multiple libraries together.** List of up to 2 additional library IDs. Don't use this for single library questions.
 
 ## Example Workflows
@@ -209,7 +227,7 @@ resolve_library_id(query="next.js")
 get_smart_docs(
     library_id="vercel/next.js",
     context="I want to create dynamic blog post pages with Next.js, including slug-based routing, metadata generation, and static generation for better performance",
-    model="gemini-2.5-flash"
+    model="claude-sonnet-4-20250514"
 )
 ```
 
