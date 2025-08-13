@@ -13,7 +13,7 @@
 ## Features
 
 - **Smart Documentation**: AI-enhanced docs with practical code examples tailored to your project
-- **Dual AI Support**: Choose between Google Gemini and OpenAI models
+- **Multi AI Support**: Choose between Google Gemini, OpenAI models, and Anthropic Sonnet 4 (1m)
 - **Intelligent Fallback**: Automatically switches between AI providers  
 - **Model Selection**: Pick the right model for speed vs quality tradeoffs
 - **Library Search**: Find the right library IDs for any package
@@ -45,6 +45,7 @@ ContextS supports both **Google Gemini** and **OpenAI** models:
 
 #### Anthropic Models  
 - `claude-sonnet-4-20250514` with 1 million token context length (in beta) - Balanced speed and quality
+**Note**: Claude Sonnet 4 with 1 million token context is in beta, and requires tier 4 API status. Technically, the normal Claude models would work with 200K context, but that's a bit tight.
 
 **Intelligent Fallback**: If all APIs are configured, ContextS defaults to Gemini 2.5 Flash, then falls back to GPT-4.1, and finally tries Claude Sonnet 4 1m before giving up.
 ## Installation
