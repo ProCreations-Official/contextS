@@ -92,7 +92,7 @@ export OPENAI_API_KEY="your-openai-api-key-here"
 export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
 ```
 
-#### Option C: All APIs (Best Experience)
+#### Option D: All APIs (Best Experience)
 For maximum reliability, configure all:
 
 ```bash
@@ -289,6 +289,8 @@ get_smart_docs(
 
 - `GEMINI_API_KEY`: Your Google Gemini API key (optional, but recommended)
 - `OPENAI_API_KEY`: Your OpenAI API key (optional, but recommended)
+- `ANTHROPIC_API_KEY`: Your Anthropic API Key (optional, but recommended)
+
 
 **Note**: At least one API key is required for ContextS to function.
 
@@ -298,7 +300,7 @@ When multiple APIs are configured, ContextS uses this priority:
 
 1. **Manual Selection**: If you specify a `model` parameter, it uses that model
 2. **Automatic Fallback**: If the requested model's API isn't available, it falls back to the other provider
-3. **Default Priority**: Gemini 2.5 Flash → GPT-4.1
+3. **Default Priority**: Gemini 2.5 Flash → GPT-4.1 → Claude Sonnet 4 (1m)
 4. **Error Handling**: If no AI service is available, returns raw documentation with an error message
 
 ### Custom Configuration
@@ -379,11 +381,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 Contributions are welcome! Areas for improvement:
 
-- Additional AI models support
+- Additional AI models support (we look for models with 400k+ context length, and good instruction following)
 - Better error handling
 - Caching for faster responses
 - Custom prompt templates
 - Integration with more documentation sources
+- And more!
 
 ## License
 
@@ -402,6 +405,7 @@ This work is licensed under a
 
 - **Context7** for providing the excellent documentation API
 - **Google Gemini** for powerful AI capabilities
+- **Anthropic** for the great, ethical models
 - **OpenAI** for advanced language model capabilities
 - **MCP** for the Model Context Protocol standard
 
