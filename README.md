@@ -8,7 +8,7 @@
 
 </div>
 
-**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance. The "S" stands for **Smart** - it supports Google Gemini, OpenAI ChatGPT, and Anthropic Claude models to provide targeted, practical documentation with working code examples tailored to your specific needs.
+**ContextS** is an intelligent MCP (Model Context Protocol) server that enhances Context7 with AI-powered code examples and guidance. The "S" stands for **Smart** - it supports Google Gemini API, OpenAI API, and Anthropic Claude API models to provide targeted, practical documentation with working code examples tailored to your specific needs.
 
 ## Features
 
@@ -31,7 +31,7 @@
 
 ### AI Provider Support
 
-ContextS supports both **Google Gemini** and **OpenAI** models:
+ContextS supports **Google Gemini**, **OpenAI**, and **Anthropic Sonnet 4 (1m)** models:
 
 #### Google Gemini Models
 - `gemini-2.5-pro` - Slowest, highest quality
