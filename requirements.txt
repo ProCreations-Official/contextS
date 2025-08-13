@@ -12,6 +12,9 @@ google-generativeai>=0.8.0
 # OpenAI API (optional fallback)
 openai>=1.68.0
 
+# Anthropic API (optional)
+anthropic>=0.21.3
+
 # Additional MCP features
 pydantic>=2.0.0
 
