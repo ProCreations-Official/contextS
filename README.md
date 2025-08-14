@@ -13,15 +13,16 @@
 ## Features
 
 - **Smart Documentation**: AI-enhanced docs with practical code examples tailored to your project
-- **Multi AI Support**: Choose between Google Gemini, OpenAI models, and Anthropic Sonnet 4 (1m)
-- **Intelligent Fallback**: Automatically switches between AI providers  
-- **Model Selection**: Pick the right model for speed vs quality tradeoffs
-- **Library Search**: Find the right library IDs for any package
-- **Version-Specific Docs**: Get documentation for specific library versions
-- **Context-Aware**: Provide project details to get highly relevant examples
-- **Up-to-Date Content**: Powered by Context7's real-time documentation database
-- **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients
-- **Multi-Library Support**: Optional integration examples from multiple libraries
+- **Multi-Turn Chat**: Continue the conversation with the AI to refine your understanding.
+- **Multi AI Support**: Choose between Google Gemini, OpenAI, and Anthropic models.
+- **Intelligent Fallback**: Automatically switches between AI providers.
+- **Model Selection**: Pick the right model for speed vs quality tradeoffs.
+- **Library Search**: Find the right library IDs for any package.
+- **Version-Specific Docs**: Get documentation for specific library versions.
+- **Context-Aware**: Provide project details to get highly relevant examples.
+- **Up-to-Date Content**: Powered by Context7's real-time documentation database.
+- **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients.
+- **Multi-Library Support**: Optional integration examples from multiple libraries.
 
 ## Requirements
 
@@ -31,23 +32,24 @@
 
 ### AI Provider Support
 
-ContextS supports **Google Gemini**, **OpenAI**, and **Anthropic Sonnet 4 (1m)** models:
+ContextS supports **Google Gemini**, **OpenAI**, and **Anthropic** models:
 
 #### Google Gemini Models
 - `gemini-2.5-pro` - Slowest, highest quality
 - `gemini-2.5-flash` - Default, good balance (recommended)
 - `gemini-2.5-flash-lite` - Fastest, lower quality
 
-#### OpenAI Models  
-- `gpt-4.1` - Slowest, highest quality
-- `gpt-4.1-mini` - Balanced speed and quality
-- `gpt-4.1-nano` - Fastest, lower quality
+#### OpenAI Models
+- `gpt-5` - Slowest, highest quality
+- `gpt-5-mini` - Balanced speed and quality
+- `gpt-5-nano` - Fastest, lower quality
 
-#### Anthropic Models  
-- `claude-sonnet-4-20250514` with 1 million token context length (in beta) - Balanced speed and quality
-**Note**: Claude Sonnet 4 with 1 million token context is in beta, and requires tier 4 API status. Technically, the normal Claude models would work with 200K context, but that's a bit tight.
+#### Anthropic Models
+- `claude-opus-4-1` - Slowest, highest quality
+- `claude-sonnet-4` - Balanced speed and quality
+- `sonnet4:1m` - 1M context window (beta)
 
-**Intelligent Fallback**: If all APIs are configured, ContextS defaults to Gemini 2.5 Flash, then falls back to GPT-4.1, and finally tries Claude Sonnet 4 1m before giving up.
+**Intelligent Fallback**: If all APIs are configured, ContextS defaults to Gemini 2.5 Flash, then falls back to GPT-5, and finally tries Claude Sonnet 4 before giving up.
 ## Installation
 
 ### Step 1: Clone and Setup
@@ -171,7 +173,7 @@ Follow your client's MCP server configuration documentation, using:
 
 ## Usage
 
-ContextS provides two main tools:
+ContextS provides three main tools:
 
 ### 1. `resolve_library_id` - Search for Libraries
 
@@ -207,14 +209,21 @@ get_smart_docs(
 **Parameters**:
 - `library_id` (required): Context7-compatible library ID for your main/primary library
 - `context` (required): Detailed context about what you're trying to accomplish - provide comprehensive details about your project, requirements, and specific implementation needs
-- `tokens` (optional): Max tokens to retrieve per library (default: 200,000)
 - `version` (optional): Specific version for main library (e.g., "v14.3.0-canary.87")
 - `model` (optional): AI model to use for enhancement. Options:
   - **Gemini Models**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
-  - **OpenAI Models**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
-  - **Anthropic Models**: `claude-sonnet-4-20250514` with 1M token context (beta)
-  - If not specified, uses fallback (Gemini 2.5 Flash → GPT-4.1 → Sonnet 4 1M)
+  - **OpenAI Models**: `gpt-5`, `gpt-5-mini`, `gpt-5-nano`
+  - **Anthropic Models**: `claude-opus-4-1`, `claude-sonnet-4`, `sonnet4:1m` (beta)
+  - If not specified, uses fallback (Gemini 2.5 Flash → GPT-5 → Claude Sonnet 4)
 - `extra_libraries` (optional): **ONLY use when you need help with multiple libraries together.** List of up to 2 additional library IDs. Don't use this for single library questions.
+
+### 3. `chat_continue` - Continue the Conversation
+
+After using `get_smart_docs`, you can continue the conversation with the AI to ask follow-up questions or get more details.
+
+```
+chat_continue(context="Can you give me a more detailed example for the dynamic routing part?")
+```
 
 ## Example Workflows
 
@@ -228,8 +237,11 @@ resolve_library_id(query="next.js")
 get_smart_docs(
     library_id="vercel/next.js",
     context="I want to create dynamic blog post pages with Next.js, including slug-based routing, metadata generation, and static generation for better performance",
-    model="claude-sonnet-4-20250514"
+    model="claude-sonnet-4"
 )
+
+# Step 3: Ask a follow-up question
+chat_continue(context="That's helpful, but can you explain how to handle nested dynamic routes?")
 ```
 
 ### 2. Learn Supabase Authentication
@@ -242,7 +254,7 @@ resolve_library_id(query="supabase")
 get_smart_docs(
     library_id="supabase/supabase",
     context="implementing user login and signup with Supabase Auth, including social providers, email verification, password reset, and role-based access control",
-    model="gpt-4.1-mini"
+    model="gpt-5-mini"
 )
 ```
 
@@ -300,7 +312,7 @@ When multiple APIs are configured, ContextS uses this priority:
 
 1. **Manual Selection**: If you specify a `model` parameter, it uses that model
 2. **Automatic Fallback**: If the requested model's API isn't available, it falls back to the other provider
-3. **Default Priority**: Gemini 2.5 Flash → GPT-4.1 → Claude Sonnet 4 (1m)
+3. **Default Priority**: Gemini 2.5 Flash → GPT-5 → Claude Sonnet 4
 4. **Error Handling**: If no AI service is available, returns raw documentation with an error message
 
 ### Custom Configuration
@@ -335,7 +347,7 @@ The AI enhancement includes:
 ### Context7 Endpoints Used
 
 - `GET /api/v1/search?query={query}` - Search libraries
-- `GET /api/v1/{library_id}?type=txt&tokens={tokens}` - Get docs
+- `GET /api/v1/{library_id}?type=txt` - Get docs
 
 ### Library ID Format
 
