@@ -6,6 +6,9 @@ A smart version of Context7 that enhances documentation with AI-powered code exa
 
 import logging
 import os
+import subprocess
+import shutil
+import asyncio
 from typing import Optional, Literal
 
 import httpx
@@ -30,6 +33,13 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load environment variables from .env file
+from pathlib import Path
+from dotenv import load_dotenv
+config_file = Path.home() / ".config" / "contextS" / "keys.env"
+if config_file.exists():
+    load_dotenv(dotenv_path=config_file, override=True)
+
 # Initialize AI services (at least one is required)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -40,11 +50,14 @@ GEMINI_AVAILABLE = bool(GEMINI_API_KEY)
 if GEMINI_AVAILABLE:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# Validate that at least one AI service is configured
-if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY) or (ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY)):
-    raise ValueError(
-        "At least one AI service must be configured. Set GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY environment variables."
-    )
+def run_server():
+    """Main server entry point."""
+    # Validate that at least one AI service is configured for the server
+    if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY) or (ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY)):
+        logger.error("Cannot start server: At least one AI service must be configured.")
+        logger.error("Please run `contextS setup` or set environment variables (e.g., GEMINI_API_KEY).")
+        return
+    mcp.run()
     
 # Context7 API base URL
 CONTEXT7_BASE_URL = "https://context7.com/api/v1"
@@ -338,37 +351,123 @@ async def _fetch_library_docs(library_id: str, tokens: int, version: Optional[st
     except Exception as e:
         return "", f"Error fetching docs for '{library_id}': {str(e)}"
 
-async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, context: str, selected_model: Optional[str] = None) -> str:
-    """Enhance documentation with AI-powered insights and code examples."""
-    
-    # Determine which model to use based on availability and preference
-    model_to_use, error_message = await _determine_ai_model(selected_model)
-    
-    if error_message:
-        main_docs = docs_dict.get(main_library_id, "")
-        return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*{error_message}*"
-    
+async def _enhance_with_gemini_cli(prompt: str, model_name: Optional[str] = None) -> Optional[str]:
+    if not shutil.which("gemini"):
+        logger.info("gemini CLI not found, skipping.")
+        return None
     try:
-        # Create enhancement prompt for multiple libraries
-        libraries_list = list(docs_dict.keys())
-        main_docs = docs_dict.get(main_library_id, "")
+        logger.info("Attempting enhancement with gemini CLI...")
+        command = ["gemini", "-p", prompt]
+        if model_name and model_name.startswith("gemini"):
+            command.extend(["-m", model_name])
         
-        docs_sections = []
-        for lib_id, lib_docs in docs_dict.items():
-            if lib_id == main_library_id:
-                docs_sections.append(f"## PRIMARY LIBRARY: {lib_id}\n{lib_docs}")
-            else:
-                docs_sections.append(f"## ADDITIONAL LIBRARY: {lib_id}\n{lib_docs}")
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=os.environ
+        )
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            logger.info("gemini CLI enhancement successful.")
+            return stdout.decode()
+        else:
+            logger.error(f"gemini CLI failed: {stderr.decode()}")
+            return None
+    except Exception as e:
+        logger.error(f"Error running gemini CLI: {e}")
+        return None
+
+async def _enhance_with_claude_cli(prompt: str, model_name: Optional[str] = None) -> Optional[str]:
+    if not shutil.which("claude"):
+        logger.info("claude CLI not found, skipping.")
+        return None
+    try:
+        logger.info("Attempting enhancement with claude CLI...")
+        command = ["claude", "-p", prompt, "--output-format", "json"]
+        if model_name and model_name.startswith("claude"):
+            command.extend(["--model", model_name])
         
-        all_docs_text = "\n\n".join(docs_sections)
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=os.environ
+        )
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            logger.info("claude CLI enhancement successful.")
+            import json
+            lines = stdout.decode().strip().split('\n')
+            final_json_line = [line for line in lines if line.strip()]
+            if not final_json_line:
+                return None
+            final_json = json.loads(final_json_line[-1])
+
+            if final_json.get("type") == "completion":
+                 return final_json.get("completion", "")
+            return stdout.decode()
+        else:
+            logger.error(f"claude CLI failed: {stderr.decode()}")
+            return None
+    except Exception as e:
+        logger.error(f"Error running claude CLI: {e}")
+        return None
+
+async def _enhance_with_codex_cli(prompt: str) -> Optional[str]:
+    if not shutil.which("codex"):
+        logger.info("codex CLI not found, skipping.")
+        return None
+    try:
+        logger.info("Attempting enhancement with codex CLI...")
+        command = ["codex", "exec", prompt, "--ask-for-approval", "never"]
         
-        # Create appropriate prompt based on number of libraries
-        has_multiple_libraries = len(libraries_list) > 1
-        
-        if has_multiple_libraries:
-            # Multi-library prompt
-            additional_libs = [lib for lib in libraries_list if lib != main_library_id]
-            prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=os.environ
+        )
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            logger.info("codex CLI enhancement successful.")
+            return stdout.decode()
+        else:
+            logger.error(f"codex CLI failed: {stderr.decode()}")
+            return None
+    except Exception as e:
+        logger.error(f"Error running codex CLI: {e}")
+        return None
+
+
+async def enhance_with_ai(docs_dict: dict[str, str], main_library_id: str, context: str, selected_model: Optional[str] = None) -> str:
+    """Enhance documentation with AI-powered insights and code examples, with fallback logic."""
+
+    main_docs = docs_dict.get(main_library_id, "")
+
+    # 1. Generate the master prompt
+    libraries_list = list(docs_dict.keys())
+
+    docs_sections = []
+    for lib_id, lib_docs in docs_dict.items():
+        if "[ERROR:" in lib_docs:
+             docs_sections.append(f"## {lib_id}\n{lib_docs}")
+        elif lib_id == main_library_id:
+            docs_sections.append(f"## PRIMARY LIBRARY: {lib_id}\n{lib_docs}")
+        else:
+            docs_sections.append(f"## ADDITIONAL LIBRARY: {lib_id}\n{lib_docs}")
+
+    all_docs_text = "\n\n".join(docs_sections)
+
+    has_multiple_libraries = len(libraries_list) > 1
+
+    if has_multiple_libraries:
+        # Multi-library prompt
+        additional_libs = [lib for lib in libraries_list if lib != main_library_id]
+        prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
 
 **Context (what the user needs):** {context}
 **Primary Library:** {main_library_id}
@@ -421,9 +520,9 @@ Create a definitive integration guide that shows exactly how to use {main_librar
 - Show performance implications of choices
 
 Make this the definitive resource for using these libraries together."""
-        else:
-            # Single library prompt
-            prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
+    else:
+        # Single library prompt
+        prompt = f"""You are ContextS, a world-class technical documentation expert. Transform raw documentation into comprehensive, practical guides that make developers instantly productive.
 
 **Context (what the user needs):** {context}
 **Library:** {main_library_id}
@@ -477,19 +576,46 @@ Create the definitive guide for {main_library_id} that directly addresses the us
 
 Make this THE resource developers need to master {main_library_id} for their specific use case."""
 
-        # Generate enhanced documentation based on selected model
-        if model_to_use.startswith("gemini"):
-            return await _enhance_with_gemini(prompt, model_to_use, main_library_id, main_docs)
-        elif model_to_use.startswith("gpt"):
-            return await _enhance_with_openai(prompt, model_to_use, main_library_id, main_docs)
-        elif model_to_use.startswith("claude"):
-            return await _enhance_with_anthropic(prompt, model_to_use, main_library_id, main_docs)
-        else:
-            return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*Unsupported model: {model_to_use}*"
+    # 2. Primary attempt: Use SDKs if available
+    sdks_available = GEMINI_API_KEY or OPENAI_API_KEY or ANTHROPIC_API_KEY
+    if sdks_available:
+        try:
+            logger.info("Attempting enhancement with Python SDKs...")
+            model_to_use, error_message = await _determine_ai_model(selected_model)
             
-    except Exception as e:
-        logger.error(f"AI enhancement failed: {e}")
-        return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*AI enhancement failed: {str(e)}*"
+            if error_message:
+                logger.warning(f"SDK model determination failed: {error_message}")
+            else:
+                if model_to_use.startswith("gemini"):
+                    return await _enhance_with_gemini(prompt, model_to_use, main_library_id, main_docs)
+                elif model_to_use.startswith("gpt"):
+                    return await _enhance_with_openai(prompt, model_to_use, main_library_id, main_docs)
+                elif model_to_use.startswith("claude"):
+                    return await _enhance_with_anthropic(prompt, model_to_use, main_library_id, main_docs)
+        except Exception as e:
+            logger.warning(f"SDK enhancement failed: {e}. Proceeding to CLI fallbacks.")
+
+    # 3. Fallback attempts: Use CLIs
+    logger.info("SDKs failed or unavailable. Trying CLI fallbacks...")
+
+    # Fallback 1: Gemini CLI
+    cli_result = await _enhance_with_gemini_cli(prompt, selected_model)
+    if cli_result:
+        return cli_result
+
+    # Fallback 2: Claude CLI
+    cli_result = await _enhance_with_claude_cli(prompt, selected_model)
+    if cli_result:
+        return cli_result
+
+    # Fallback 3: Codex CLI
+    cli_result = await _enhance_with_codex_cli(prompt)
+    if cli_result:
+        return cli_result
+
+    # 4. If all else fails, return raw docs with an error
+    logger.error("All enhancement methods (SDKs and CLIs) failed.")
+    return f"# Documentation for {main_library_id}\n\n{main_docs}\n\n*AI enhancement failed. All available SDK and CLI methods were unsuccessful.*"
 
 
 async def _determine_ai_model(requested_model: Optional[str]) -> tuple[Optional[str], Optional[str]]:
@@ -631,9 +757,101 @@ async def _enhance_with_anthropic(prompt: str, model_name: str, library_id: str,
         raise
 
 
-def main():
+def run_server():
     """Main server entry point."""
     mcp.run()
+
+def show_status():
+    """Displays the configuration status."""
+    import shutil
+    from pathlib import Path
+    from dotenv import load_dotenv
+
+    print("--- ContextS Status ---")
+
+    # --- API Key Status ---
+    print("\n[API Keys]")
+    config_file = Path.home() / ".config" / "contextS" / "keys.env"
+    if config_file.exists():
+        print(f"  - Loading keys from: {config_file}")
+        load_dotenv(dotenv_path=config_file, override=True)
+    else:
+        print(f"  - No config file found at {config_file}")
+        # Still load from environment, in case they are set there
+        load_dotenv()
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+
+    print(f"  - Gemini (GEMINI_API_KEY):      {'✅ Found' if gemini_key else '❌ Not Found'}")
+    print(f"  - OpenAI (OPENAI_API_KEY):     {'✅ Found' if openai_key else '❌ Not Found'}")
+    print(f"  - Anthropic (ANTHROPIC_API_KEY): {'✅ Found' if anthropic_key else '❌ Not Found'}")
+
+    # --- CLI Tool Status ---
+    print("\n[CLI Tools]")
+    clis_to_check = ["gemini", "claude", "codex"]
+    for cli in clis_to_check:
+        path = shutil.which(cli)
+        if path:
+            print(f"  - {cli:<10} {'✅ Found at:'} {path}")
+        else:
+            print(f"  - {cli:<10} {'❌ Not Found in PATH'}")
+
+    print("\n--- End of Status ---")
+
+def run_setup():
+    """Runs the interactive setup to configure API keys."""
+    from pathlib import Path
+
+    print("--- ContextS API Key Setup ---")
+    print("You can leave any of these blank if you don't have a key.")
+    print("\nGet your API keys here:")
+    print("  - Gemini (Google AI): https://aistudio.google.com/app/apikey")
+    print("  - OpenAI: https://platform.openai.com/api-keys")
+    print("  - Anthropic: https://console.anthropic.com/settings/keys")
+
+    gemini_key = input("\nEnter your Gemini API Key: ").strip()
+    openai_key = input("Enter your OpenAI API Key: ").strip()
+    anthropic_key = input("Enter your Anthropic API Key: ").strip()
+
+    config_dir = Path.home() / ".config" / "contextS"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = config_dir / "keys.env"
+
+    with open(config_file, "w") as f:
+        if gemini_key:
+            f.write(f"GEMINI_API_KEY={gemini_key}\n")
+        if openai_key:
+            f.write(f"OPENAI_API_KEY={openai_key}\n")
+        if anthropic_key:
+            f.write(f"ANTHROPIC_API_KEY={anthropic_key}\n")
+
+    print(f"\n✅ Configuration saved successfully to {config_file}")
+
+def main():
+    """Main CLI entry point."""
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="ContextS MCP Server and CLI")
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # Server command (default)
+    parser_server = subparsers.add_parser('server', help='Run the MCP server (default)')
+    parser_server.set_defaults(func=run_server)
+
+    # Status command
+    parser_status = subparsers.add_parser('status', help='Show configuration status')
+    parser_status.set_defaults(func=show_status)
+
+    # Setup command
+    parser_setup = subparsers.add_parser('setup', help='Run interactive setup for API keys')
+    parser_setup.set_defaults(func=run_setup)
+
+    # If no command is given, default to 'server'
+    args = parser.parse_args(sys.argv[1:] if sys.argv[1:] else ['server'])
+    args.func()
 
 
 if __name__ == "__main__":

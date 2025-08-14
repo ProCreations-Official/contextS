@@ -14,168 +14,124 @@
 
 - **Smart Documentation**: AI-enhanced docs with practical code examples tailored to your project
 - **Multi AI Support**: Choose between Google Gemini, OpenAI models, and Anthropic Sonnet 4 (1m)
-- **Intelligent Fallback**: Automatically switches between AI providers  
-- **Model Selection**: Pick the right model for speed vs quality tradeoffs
-- **Library Search**: Find the right library IDs for any package
-- **Version-Specific Docs**: Get documentation for specific library versions
-- **Context-Aware**: Provide project details to get highly relevant examples
-- **Up-to-Date Content**: Powered by Context7's real-time documentation database
-- **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients
-- **Multi-Library Support**: Optional integration examples from multiple libraries
+- **Flexible AI Providers**: Use powerful models via API keys (Gemini, OpenAI, Anthropic) or through locally installed command-line tools (`gemini`, `claude`, `codex`).
+- **Intelligent Fallback**: Automatically cascades through available AI providers, from SDKs to CLIs, to ensure maximum uptime.
+- **Easy Configuration**: A simple command-line interface to set up API keys and check status.
+- **Command-Line Interface**: Manage the server and configuration with easy `contextS` commands.
+- **MCP Compatible**: Works with Claude Desktop, Cursor, and other MCP clients.
+- **Library Search**: Find the right library IDs for any package.
+- **Version-Specific Docs**: Get documentation for specific library versions.
+- **Context-Aware**: Provide project details to get highly relevant examples.
+- **Up-to-Date Content**: Powered by Context7's real-time documentation database.
+- **Multi-Library Support**: Optional integration examples from multiple libraries.
 
 ## Requirements
 
 - Python 3.8+
-- At least one AI API key (Gemini and/or OpenAI)
-- MCP-compatible client (Claude Desktop, Cursor, etc.)
+- **Optional**: API keys for Google Gemini, OpenAI, and/or Anthropic.
+- **Optional**: `gemini`, `claude`, and/or `codex` CLIs installed on your system.
+- An MCP-compatible client (Claude Desktop, Cursor, etc.) to use the AI tools.
+
+*ContextS requires at least one configured AI provider to function, either an API key or a detected CLI tool.*
 
 ### AI Provider Support
 
-ContextS supports **Google Gemini**, **OpenAI**, and **Anthropic Sonnet 4 (1m)** models:
+ContextS can use AI models from a variety of sources.
 
-#### Google Gemini Models
-- `gemini-2.5-pro` - Slowest, highest quality
-- `gemini-2.5-flash` - Default, good balance (recommended)
-- `gemini-2.5-flash-lite` - Fastest, lower quality
+#### 1. API Providers (Recommended)
+- **Google Gemini**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
+- **OpenAI**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
+- **Anthropic**: `claude-sonnet-4-20250514`
 
-#### OpenAI Models  
-- `gpt-4.1` - Slowest, highest quality
-- `gpt-4.1-mini` - Balanced speed and quality
-- `gpt-4.1-nano` - Fastest, lower quality
+#### 2. CLI Providers (Fallback)
+If API keys are not configured or if API calls fail, ContextS can fall back to using these command-line tools if they are installed on your system:
+- **Google Gemini CLI**: The `gemini` command.
+- **Anthropic Claude Code CLI**: The `claude` command.
+- **OpenAI Codex CLI**: The `codex` command.
 
-#### Anthropic Models  
-- `claude-sonnet-4-20250514` with 1 million token context length (in beta) - Balanced speed and quality
-**Note**: Claude Sonnet 4 with 1 million token context is in beta, and requires tier 4 API status. Technically, the normal Claude models would work with 200K context, but that's a bit tight.
-
-**Intelligent Fallback**: If all APIs are configured, ContextS defaults to Gemini 2.5 Flash, then falls back to GPT-4.1, and finally tries Claude Sonnet 4 1m before giving up.
 ## Installation
 
-### Step 1: Clone and Setup
+### Step 1: Clone the Repository
 
 ```bash
-# Clone the ContextS repository
 git clone https://github.com/ProCreations-Official/contextS.git
 cd contextS
-
-# Install dependencies
-pip install -r requirements.txt
 ```
 
-### Step 2: Get AI API Keys
+### Step 2: Install Dependencies and the `contextS` Command
 
-You need **at least one** of the following API keys:
-
-#### Option A: Google Gemini
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Create a new API key
-3. Set the environment variable:
+This command installs all required Python packages and makes the `contextS` command available in your shell.
 
 ```bash
-export GEMINI_API_KEY="your-gemini-api-key-here"
+pip install .
 ```
 
-#### Option B: OpenAI
-1. Go to [OpenAI API Keys](https://platform.openai.com/api-keys)
-2. Create a new API key
-3. Set the environment variable:
+### Step 3: Configure AI Providers
+
+You have two options for configuring AI providers. You can use either or both.
+
+#### Option A: Interactive Setup (Recommended)
+
+Run the interactive setup command. It will prompt you for your API keys and save them to a local configuration file.
 
 ```bash
-export OPENAI_API_KEY="your-openai-api-key-here"
+contextS setup
 ```
 
-#### Option C: Anthropic
-1. Go to [Anthropic Console API key settings](https://console.anthropic.com/settings/keys)
-2. Create a new API key
-3. Set the environment variable:
+This will store your keys in `~/.config/contextS/keys.env`.
 
-```bash
-export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
-```
+#### Option B: Install CLI Tools
 
-#### Option D: All APIs (Best Experience)
-For maximum reliability, configure all:
+If you have the `gemini`, `claude`, or `codex` CLIs installed, ContextS will automatically detect and use them as fallbacks.
 
+#### Option C: Manual Environment Variables
+
+You can still set environment variables manually if you prefer:
 ```bash
 export GEMINI_API_KEY="your-gemini-api-key-here"
 export OPENAI_API_KEY="your-openai-api-key-here"
 export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
 ```
-
-**Note**: ContextS requires at least one AI API key to function. The server will not start without AI capabilities.
-
-### Step 3: Configure Your MCP Client
-
-#### For Claude Desktop
-
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "contexts": {
-      "command": "python3",
-      "args": ["/path/to/ContextS/main.py"],
-      "env": {
-        "GEMINI_API_KEY": "your-gemini-api-key-here",
-        "OPENAI_API_KEY": "your-openai-api-key-here",
-        "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
-
-      }
-    }
-  }
-}
-```
-
-#### For Claude Code
-
-Run this command:
-
-```claude mcp add contextS python3 /path/to/ContextS/main.py  --env GEMINI_API_KEY=your-gemini-api-key-here OPENAI_API_KEY=your-openai-api-key-here ANTHROPIC_API_KEY=your-anthropic-api-key-here```
-
-
-#### For Cursor IDE
-
-Add to your MCP configuration:
-
-```json
-{
-  "mcpServers": {
-    "contexts": {
-      "command": "python3",
-      "args": ["/path/to/ContextS/main.py"],
-      "env": {
-        "GEMINI_API_KEY": "your-gemini-api-key-here",
-        "OPENAI_API_KEY": "your-openai-api-key-here",
-        "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
-      }
-    }
-  }
-}
-```
-
-#### For Other MCP Clients
-
-Follow your client's MCP server configuration documentation, using:
-- **Command**: `python3`
-- **Args**: `["/path/to/ContextS/main.py"]`
-- **Environment**: Include the API keys you have configured:
-  ```json
-  {
-  "GEMINI_API_KEY": "your-gemini-api-key-here",
-  "OPENAI_API_KEY": "your-openai-api-key-here",
-  "ANTHROPIC_API_KEY": "your-anthropic-api-key-here"
-  }
-  ```
-
-**Note**: You only need to include the API keys you have. If you only have Gemini, just include `GEMINI_API_KEY`. If you only have OpenAI, just include `OPENAI_API_KEY`. If you only have Anthropic, just include `ANTHROPIC_API_KEY`.
 
 ## Usage
 
-ContextS provides two main tools:
+ContextS is now a command-line tool.
 
-### 1. `resolve_library_id` - Search for Libraries
+### Checking Status
 
-Find the correct library ID for any package:
+To see which API keys and CLI tools are configured correctly, run:
+```bash
+contextS status
+```
+
+### Running the MCP Server
+
+To start the server so you can connect your MCP client (like Claude Desktop or Cursor), run:
+```bash
+contextS server
+```
+This is the default command, so you can also just run `contextS`.
+
+### Configuring Your MCP Client
+
+In your MCP client, you now point to the installed `contextS` command.
+
+**Example for Claude Desktop (`claude_desktop_config.json`):**
+```json
+{
+  "mcpServers": {
+    "contexts": {
+      "command": "contextS",
+      "args": ["server"]
+    }
+  }
+}
+```
+*Note: You no longer need to pass environment variables here if you used `contextS setup`.*
+
+### Using the AI Tools
+
+Once the server is running and your client is connected, you can use the `resolve_library_id` and `get_smart_docs` tools as before.
 
 ```
 resolve_library_id(query="next.js")
@@ -285,23 +241,25 @@ get_smart_docs(
 
 ## Configuration
 
-### Environment Variables
+ContextS can be configured in multiple ways, which are loaded in the following order of precedence:
 
-- `GEMINI_API_KEY`: Your Google Gemini API key (optional, but recommended)
-- `OPENAI_API_KEY`: Your OpenAI API key (optional, but recommended)
-- `ANTHROPIC_API_KEY`: Your Anthropic API Key (optional, but recommended)
+1.  **Environment Variables**: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`.
+2.  **Configuration File**: A file located at `~/.config/contextS/keys.env`, managed automatically by the `contextS setup` command.
 
+### Model Selection and Fallback Strategy
 
-**Note**: At least one API key is required for ContextS to function.
+ContextS has a robust fallback mechanism to ensure high availability. When you make a request to `get_smart_docs`:
 
-### Model Selection Strategy
+1.  **Manual Model Selection**: If you specify a `model` (e.g., `model="gpt-4.1-nano"`), ContextS will attempt to use that specific model.
 
-When multiple APIs are configured, ContextS uses this priority:
+2.  **Primary Provider (API Keys)**: If no model is specified, or if the selected model is not available, ContextS will try to use the best available model from your configured API keys. The default priority is: Gemini → OpenAI → Anthropic.
 
-1. **Manual Selection**: If you specify a `model` parameter, it uses that model
-2. **Automatic Fallback**: If the requested model's API isn't available, it falls back to the other provider
-3. **Default Priority**: Gemini 2.5 Flash → GPT-4.1 → Claude Sonnet 4 (1m)
-4. **Error Handling**: If no AI service is available, returns raw documentation with an error message
+3.  **CLI Fallback**: If all configured API key providers fail, or if you have no API keys configured, ContextS will automatically fall back to using locally installed CLI tools in the following order:
+    1.  `gemini` CLI
+    2.  `claude` CLI
+    3.  `codex` CLI
+
+4.  **Error**: If all API and CLI providers are unavailable or fail, the request will return the raw, un-enhanced documentation with an error message.
 
 ### Custom Configuration
 
