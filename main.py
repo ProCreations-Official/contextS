@@ -67,14 +67,16 @@ def get_available_models() -> dict:
     
     if OPENAI_AVAILABLE and OPENAI_API_KEY:
         available["openai"] = [
-            "gpt-4.1",      # Slowest, highest quality
-            "gpt-4.1-mini", # Balance of speed and quality
-            "gpt-4.1-nano"  # Fastest, worst quality
+            "gpt-5",      # Slowest, highest quality
+            "gpt-5-mini", # Balance of speed and quality
+            "gpt-5-nano"  # Fastest, worst quality
         ]
 
     if ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
         available["anthropic"] = [
-            "claude-sonnet-4-20250514" # 1M context window
+            "claude-sonnet-4",
+            "sonnet4:1m",
+            "claude-opus-4-1"
         ]
     
     return available
@@ -110,31 +112,38 @@ def generate_model_description() -> str:
     if available["openai"]:
         description += "\nOpenAI models (require OPENAI_API_KEY):\n"
         for model in available["openai"]:
-            if model == "gpt-4.1":
+            if model == "gpt-5":
                 description += f'               - "{model}": Slowest, highest quality\n'
-            elif model == "gpt-4.1-mini":
+            elif model == "gpt-5-mini":
                 description += f'               - "{model}": Balance of speed and quality\n'
-            elif model == "gpt-4.1-nano":
+            elif model == "gpt-5-nano":
                 description += f'               - "{model}": Fastest, worst quality\n'
 
     if available["anthropic"]:
         description += "\nAnthropic models (require ANTHROPIC_API_KEY):\n"
         for model in available["anthropic"]:
-            if model == "claude-sonnet-4-20250514":
-                description += f'               - "{model}": 1M context window\n'
+            if model == "claude-opus-4-1":
+                description += f'               - "{model}": Slowest, highest quality\n'
+            elif model == "claude-sonnet-4":
+                description += f'               - "{model}": Balance of speed and quality\n'
+            elif model == "sonnet4:1m":
+                description += f'               - "{model}": 1M context window (beta)\n'
     
     # Set default
     if available["gemini"]:
         description += f'\n               If not specified, will use "gemini-2.5-flash".'
     elif available["openai"]:
-        description += f'\n               If not specified, will use "gpt-4.1".'
+        description += f'\n               If not specified, will use "gpt-5".'
     elif available["anthropic"]:
-        description += f'\n               If not specified, will use "claude-sonnet-4-20250514".'
+        description += f'\n               If not specified, will use "claude-sonnet-4".'
     
     return description
 
 # Create FastMCP server instance
 mcp = FastMCP("ContextS")
+
+# In-memory chat history
+chat_history = []
 
 @mcp.tool()
 async def resolve_library_id(query: str) -> str:
@@ -198,7 +207,6 @@ async def resolve_library_id(query: str) -> str:
 async def get_smart_docs(
     library_id: str,
     context: str,
-    tokens: int = 150000,
     version: Optional[str] = None,
     model: Optional[str] = None,
     extra_libraries: Optional[list[str]] = None
@@ -211,7 +219,6 @@ async def get_smart_docs(
     Args:
         library_id: The library ID for your primary/main library (e.g., 'vercel/next.js', 'mongodb/docs')
         context: REQUIRED - Detailed context about what you're trying to accomplish. Provide comprehensive details about your project, requirements, and specific implementation needs to get the best code examples and explanations. Note that this is what the internal AI powering this tool will give you documentation on or help you with code based on this parameter. Be comprehensive and give full detail about what you need.
-        tokens: OPTIONAL - Maximum tokens the AI powering this tool will receive per library  (default: 150000, capped at 200k). Please note that this is the number of tokens the internal AI powering this tool will recive of documentation to assist you, so we recommend either not setting this value (will use default), or set a high number, capped at 200000. Setting a low number (like 10000 or 1000) generally results in lower quality answers.   
         version: Optional specific version for the main library (e.g., 'v14.3.0-canary.87')
         model: {generate_model_description()}
         extra_libraries: ONLY use when you need help integrating MULTIPLE libraries together. List of up to 2 additional library IDs. Example: if building a Next.js app with Supabase auth and Tailwind styling, use library_id="vercel/next.js" and extra_libraries=["supabase/supabase", "tailwindlabs/tailwindcss"]
@@ -233,6 +240,9 @@ async def get_smart_docs(
     if not context or not context.strip():
         return "Error: context parameter is required - provide detailed context about what you're trying to accomplish"
     
+    global chat_history
+    chat_history = []
+
     # Validate extra_libraries parameter
     if extra_libraries is not None:
         if not isinstance(extra_libraries, list):
@@ -273,7 +283,7 @@ async def get_smart_docs(
     
     try:
         # Fetch documentation for main library
-        main_docs, main_error = await _fetch_library_docs(library_id, tokens, version)
+        main_docs, main_error = await _fetch_library_docs(library_id, version)
         if main_error:
             return main_error
         
@@ -283,7 +293,7 @@ async def get_smart_docs(
         # Fetch documentation for extra libraries if provided
         if extra_libraries:
             for extra_lib in extra_libraries:
-                extra_docs, extra_error = await _fetch_library_docs(extra_lib, tokens, None)  # No version for extra libs
+                extra_docs, extra_error = await _fetch_library_docs(extra_lib, None)  # No version for extra libs
                 if extra_error:
                     # Include partial results with error message
                     all_docs[extra_lib] = f"[ERROR: {extra_error}]"
@@ -292,12 +302,58 @@ async def get_smart_docs(
         
         # Enhance with AI (Gemini or OpenAI based on availability and model selection)
         enhanced_docs = await enhance_with_ai(all_docs, library_id, context, model)
+
+        chat_history.append({"role": "user", "content": context})
+        chat_history.append({"role": "assistant", "content": enhanced_docs})
+
         return enhanced_docs
         
     except Exception as e:
         return f"Error: {str(e)}"
 
-async def _fetch_library_docs(library_id: str, tokens: int, version: Optional[str]) -> tuple[str, str]:
+@mcp.tool()
+async def chat_continue(context: str) -> str:
+    """Continue a conversation with the AI based on the previous `get_smart_docs` call.
+
+    Args:
+        context: The user's follow-up question or statement.
+
+    Returns:
+        The AI's response.
+    """
+    global chat_history
+    if not chat_history:
+        return "Error: `chat_continue` can only be used after a `get_smart_docs` call. Please start a new conversation with `get_smart_docs`."
+
+    chat_history.append({"role": "user", "content": context})
+
+    # We need to extract the parameters from the last `get_smart_docs` call.
+    # This is a simplification. In a real application, you'd want a more robust
+    # way to manage session state.
+    last_user_message = ""
+    for message in reversed(chat_history):
+        if message["role"] == "user":
+            last_user_message = message["content"]
+            break
+
+    # For now, we'll just re-use the last user message as the "context" for the AI.
+    # We are not re-fetching the docs, just continuing the chat.
+    # A more advanced implementation might re-run `enhance_with_ai` with the full chat history.
+
+    # Let's create a simple prompt for the AI
+    full_chat = ""
+    for message in chat_history:
+        full_chat += f"{message['role']}: {message['content']}\n\n"
+
+    # We need to determine the model from the previous message. For simplicity, we are not storing it.
+    # We will use the default model for the chat continuation.
+    enhanced_response = await enhance_with_ai({}, "", full_chat, None)
+
+    chat_history.append({"role": "assistant", "content": enhanced_response})
+
+    return enhanced_response
+
+async def _fetch_library_docs(library_id: str, version: Optional[str]) -> tuple[str, str]:
     """Fetch documentation for a single library from Context7.
     
     Returns:
@@ -314,7 +370,7 @@ async def _fetch_library_docs(library_id: str, tokens: int, version: Optional[st
         # Build query parameters
         params = {
             "type": "txt",
-            "tokens": min(tokens, 200000)  # Cap at 200k tokens
+            "tokens": 100000
         }
         
         
@@ -535,9 +591,9 @@ async def _determine_ai_model(requested_model: Optional[str]) -> tuple[Optional[
     if GEMINI_AVAILABLE:
         return "gemini-2.5-flash", None
     elif OPENAI_AVAILABLE and OPENAI_API_KEY:
-        return "gpt-4.1", None
+        return "gpt-5", None
     elif ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
-        return "claude-sonnet-4-20250514", None
+        return "claude-sonnet-4", None
     
     return None, "No AI models configured. Please set up GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY environment variables."
 
@@ -580,16 +636,21 @@ async def _enhance_with_openai(prompt: str, model_name: str, library_id: str, do
         # Use the exact model names as they exist in the OpenAI API
         actual_model = model_name
         
-        # Generate enhanced documentation
-        response = await client.chat.completions.create(
-            model=actual_model,
-            messages=[
+        params = {
+            "model": actual_model,
+            "messages": [
                 {"role": "system", "content": "You are ContextS, a world-class technical documentation expert who creates comprehensive, practical guides. You excel at transforming raw documentation into immediately actionable resources that make developers productive. Focus on complete, runnable examples with clear explanations of WHY each choice matters."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
-            max_tokens=24576,
-        )
+            "temperature": 0.3,
+            "max_tokens": 24576,
+        }
+
+        if model_name.startswith("gpt-5"):
+            params["reasoning_effort"] = "low"
+
+        # Generate enhanced documentation
+        response = await client.chat.completions.create(**params)
         
         await client.close()
         
@@ -609,15 +670,28 @@ async def _enhance_with_anthropic(prompt: str, model_name: str, library_id: str,
         # Create async Anthropic client
         client = AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
 
+        actual_model = model_name
+        betas = []
+
+        if model_name == "sonnet4:1m":
+            actual_model = "claude-sonnet-4-20250514"
+            betas.append("context-1m-2025-08-07")
+        elif model_name == "claude-sonnet-4":
+            actual_model = "claude-sonnet-4-20250514"
+        elif model_name == "claude-opus-4-1":
+            actual_model = "claude-opus-4-1-20250805"
+
+        params = {
+            "model": actual_model,
+            "max_tokens": 4096,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+
+        if betas:
+            params["betas"] = betas
+
         # Generate enhanced documentation
-        response = await client.beta.messages.create(
-            model=model_name,
-            max_tokens=4096,  # Adjust as needed
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            betas=["context-1m-2025-08-07"]
-        )
+        response = await client.beta.messages.create(**params)
 
         await client.close()
 
