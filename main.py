@@ -314,7 +314,7 @@ async def get_smart_docs(
 @mcp.tool()
 async def chat_continue(context: str) -> str:
     """Continue a conversation with the AI based on the previous `get_smart_docs` call.
-
+For use when you have anymore questions with the docs, need to follow up on something with the docs, etc.
     Args:
         context: The user's follow-up question or statement.
 
@@ -605,7 +605,7 @@ async def _enhance_with_gemini(prompt: str, model_name: str, library_id: str, do
         gemini_model = genai.GenerativeModel(
             model_name=model_name,
             generation_config={
-                "temperature": 0.3,
+                "temperature": 0.7,
                 "top_p": 0.9,
                 "top_k": 40,
                 "max_output_tokens": 24576,
@@ -642,7 +642,7 @@ async def _enhance_with_openai(prompt: str, model_name: str, library_id: str, do
                 {"role": "system", "content": "You are ContextS, a world-class technical documentation expert who creates comprehensive, practical guides. You excel at transforming raw documentation into immediately actionable resources that make developers productive. Focus on complete, runnable examples with clear explanations of WHY each choice matters."},
                 {"role": "user", "content": prompt}
             ],
-            "temperature": 0.3,
+            "temperature": 0.7,
             "max_tokens": 24576,
         }
 
