@@ -142,7 +142,8 @@ def generate_model_description() -> str:
 # Create FastMCP server instance
 mcp = FastMCP("ContextS")
 
-# In-memory chat history
+# In-memory chat state
+chat_state = {}
 chat_history = []
 
 @mcp.tool()
@@ -240,7 +241,15 @@ async def get_smart_docs(
     if not context or not context.strip():
         return "Error: context parameter is required - provide detailed context about what you're trying to accomplish"
     
-    global chat_history
+    global chat_state, chat_history
+
+    # Reset chat state for a new conversation
+    chat_state = {
+        "library_id": library_id,
+        "version": version,
+        "model": model,
+        "extra_libraries": extra_libraries
+    }
     chat_history = []
 
     # Validate extra_libraries parameter
@@ -321,37 +330,50 @@ For use when you have anymore questions with the docs, need to follow up on some
     Returns:
         The AI's response.
     """
-    global chat_history
-    if not chat_history:
+    global chat_state, chat_history
+    if not chat_history or not chat_state:
         return "Error: `chat_continue` can only be used after a `get_smart_docs` call. Please start a new conversation with `get_smart_docs`."
 
+    # Append new user message to history
     chat_history.append({"role": "user", "content": context})
 
-    # We need to extract the parameters from the last `get_smart_docs` call.
-    # This is a simplification. In a real application, you'd want a more robust
-    # way to manage session state.
-    last_user_message = ""
-    for message in reversed(chat_history):
-        if message["role"] == "user":
-            last_user_message = message["content"]
-            break
+    try:
+        # Re-fetch documentation to provide fresh context to the AI
+        library_id = chat_state.get("library_id")
+        version = chat_state.get("version")
+        model = chat_state.get("model")
+        extra_libraries = chat_state.get("extra_libraries")
 
-    # For now, we'll just re-use the last user message as the "context" for the AI.
-    # We are not re-fetching the docs, just continuing the chat.
-    # A more advanced implementation might re-run `enhance_with_ai` with the full chat history.
+        main_docs, main_error = await _fetch_library_docs(library_id, version)
+        if main_error:
+            return main_error
 
-    # Let's create a simple prompt for the AI
-    full_chat = ""
-    for message in chat_history:
-        full_chat += f"{message['role']}: {message['content']}\n\n"
+        all_docs = {library_id: main_docs}
 
-    # We need to determine the model from the previous message. For simplicity, we are not storing it.
-    # We will use the default model for the chat continuation.
-    enhanced_response = await enhance_with_ai({}, "", full_chat, None)
+        if extra_libraries:
+            for extra_lib in extra_libraries:
+                extra_docs, extra_error = await _fetch_library_docs(extra_lib, None)
+                if extra_error:
+                    all_docs[extra_lib] = f"[ERROR: {extra_error}]"
+                else:
+                    all_docs[extra_lib] = extra_docs
 
-    chat_history.append({"role": "assistant", "content": enhanced_response})
+        # Build the full conversation history for the prompt
+        conversation_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in chat_history])
 
-    return enhanced_response
+        # Create a new context string that includes the latest user message and the conversation history
+        new_context = f"This is a follow-up question. Here is the conversation so far:\n{conversation_history}\n\nBased on this conversation and the documentation, please answer the user's latest question:\n{context}"
+
+        # Enhance with AI using the original parameters and the new context
+        enhanced_response = await enhance_with_ai(all_docs, library_id, new_context, model)
+
+        # Append AI response to history
+        chat_history.append({"role": "assistant", "content": enhanced_response})
+
+        return enhanced_response
+
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 async def _fetch_library_docs(library_id: str, version: Optional[str]) -> tuple[str, str]:
     """Fetch documentation for a single library from Context7.
