@@ -6,6 +6,7 @@ A smart version of Context7 that enhances documentation with AI-powered code exa
 
 import logging
 import os
+import json
 from typing import Optional, Literal
 
 import httpx
@@ -45,7 +46,17 @@ if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY) or (ANTHROPIC_
     raise ValueError(
         "At least one AI service must be configured. Set GEMINI_API_KEY, OPENAI_API_KEY, and/or ANTHROPIC_API_KEY environment variables."
     )
-    
+
+# Load model settings from models.json
+model_settings = {}
+try:
+    with open("models.json", "r") as f:
+        model_settings = json.load(f)
+except FileNotFoundError:
+    logger.warning("models.json not found. Using default model settings.")
+except json.JSONDecodeError:
+    logger.error("Failed to decode models.json. Using default model settings.")
+
 # Context7 API base URL
 CONTEXT7_BASE_URL = "https://context7.com/api/v1"
 
@@ -601,13 +612,19 @@ async def _determine_ai_model(requested_model: Optional[str]) -> tuple[Optional[
 async def _enhance_with_gemini(prompt: str, model_name: str, library_id: str, docs: str) -> str:
     """Enhance documentation using Google Gemini."""
     try:
+        # Get model-specific settings or use defaults
+        settings = model_settings.get(model_name, {})
+        temperature = settings.get("temperature", 0.7)
+        top_p = settings.get("top_p", 0.9)
+        top_k = settings.get("top_k", 40)
+
         # Configure Gemini model
         gemini_model = genai.GenerativeModel(
             model_name=model_name,
             generation_config={
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "top_k": 40,
+                "temperature": temperature,
+                "top_p": top_p,
+                "top_k": top_k,
                 "max_output_tokens": 24576,
             },
             system_instruction="You are ContextS, a world-class technical documentation expert who creates comprehensive, practical guides. You excel at transforming raw documentation into immediately actionable resources that make developers productive. Focus on complete, runnable examples with clear explanations of WHY each choice matters."
@@ -636,15 +653,23 @@ async def _enhance_with_openai(prompt: str, model_name: str, library_id: str, do
         # Use the exact model names as they exist in the OpenAI API
         actual_model = model_name
         
+        # Get model-specific settings or use defaults
+        settings = model_settings.get(model_name, {})
+        temperature = settings.get("temperature", 0.7)
+        top_p = settings.get("top_p")  # Can be None
+
         params = {
             "model": actual_model,
             "messages": [
                 {"role": "system", "content": "You are ContextS, a world-class technical documentation expert who creates comprehensive, practical guides. You excel at transforming raw documentation into immediately actionable resources that make developers productive. Focus on complete, runnable examples with clear explanations of WHY each choice matters."},
                 {"role": "user", "content": prompt}
             ],
-            "temperature": 0.7,
+            "temperature": temperature,
             "max_tokens": 24576,
         }
+
+        if top_p is not None:
+            params["top_p"] = top_p
 
         if model_name.startswith("gpt-5"):
             params["reasoning_effort"] = "low"
@@ -681,10 +706,15 @@ async def _enhance_with_anthropic(prompt: str, model_name: str, library_id: str,
         elif model_name == "claude-opus-4-1":
             actual_model = "claude-opus-4-1-20250805"
 
+        # Get model-specific settings or use defaults
+        settings = model_settings.get(model_name, {})
+        temperature = settings.get("temperature", 1.0)
+
         params = {
             "model": actual_model,
             "max_tokens": 4096,
             "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
         }
 
         if betas:

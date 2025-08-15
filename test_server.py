@@ -27,7 +27,7 @@ async def test_tools():
     # Test 2: Documentation fetch (without AI enhancement)
     print("\n2️⃣ Testing documentation fetch...")
     try:
-        result = await get_smart_docs("vercel/next.js", topic="routing", tokens=1000)
+        result = await get_smart_docs("vercel/next.js", context="routing")
         print("✅ Documentation fetch successful!")
         print(f"Result length: {len(result)} characters")
         if "routing" in result.lower() or "next.js" in result.lower():
