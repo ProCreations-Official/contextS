@@ -1,34 +1,30 @@
 ---
 name: Bug Report
 about: Create a report to help us improve
+title: "[Bug]: "
+labels: ["bug"]
+assignees: ""
 ---
 
-**Describe the bug**
+**Describe the bug** (Required)
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+**To Reproduce** (Required)
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-**Expected behavior**
+**Expected behavior** (Required)
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**OS** (Optional)
+ - Operating System: [e.g. Windows 11, macOS 15.x, Ubuntu 22.04]
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Provider** (Required for AI-related issues)
+ - AI Provider/s used: [e.g. Anthropic, OpenAI, Google Gemini]
+ - Provider that caused the error (if specific): [e.g. Only occurs with OpenAI, works fine with Anthropic]
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
-
-**Additional context**
+**Additional context** (Optional)
 Add any other context about the problem here.
