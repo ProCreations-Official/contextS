@@ -2,7 +2,6 @@ name: 'Enhancement'
 description: 'Suggest an enhancement for an existing feature'
 title: "[Enhancement]: "
 labels: ["enhancement"]
-assignees: ""
 body:
   - type: 'textarea'
     id: 'enhancement-description'
