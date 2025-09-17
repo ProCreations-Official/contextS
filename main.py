@@ -12,6 +12,8 @@ import httpx
 import google.generativeai as genai
 from mcp.server.fastmcp import FastMCP
 
+from context_s.config import get_context7_api_key
+
 # Try to import OpenAI (optional dependency)
 try:
     from openai import AsyncOpenAI
@@ -34,6 +36,10 @@ logger = logging.getLogger(__name__)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+CONTEXT7_API_KEY, CONTEXT7_API_KEY_SOURCE = get_context7_api_key()
+
+if CONTEXT7_API_KEY and CONTEXT7_API_KEY_SOURCE == "config":
+    logger.info("Loaded Context7 API key from ContextS configuration file.")
 
 # Configure Gemini if available
 GEMINI_AVAILABLE = bool(GEMINI_API_KEY)
@@ -47,7 +53,20 @@ if not (GEMINI_AVAILABLE or (OPENAI_AVAILABLE and OPENAI_API_KEY) or (ANTHROPIC_
     )
     
 # Context7 API base URL
-CONTEXT7_BASE_URL = "https://context7.com/api/v1"
+CONTEXT7_API_BASE_URL = "https://context7.com/api"
+
+
+def _context7_headers(extra: Optional[dict[str, str]] = None) -> dict[str, str]:
+    """Build default headers for requests to the Context7 API."""
+
+    headers: dict[str, str] = {"Content-Type": "application/json", "X-Context7-Source": "mcp-server"}
+    if CONTEXT7_API_KEY:
+        headers["Authorization"] = f"Bearer {CONTEXT7_API_KEY}"
+
+    if extra:
+        headers.update(extra)
+
+    return headers
 
 # Model availability functions
 def get_available_models() -> dict:
@@ -161,13 +180,23 @@ async def resolve_library_id(query: str) -> str:
     
     try:
         async with httpx.AsyncClient() as client:
-            url = f"{CONTEXT7_BASE_URL}/search"
+            url = f"{CONTEXT7_API_BASE_URL}/v1/search"
             params = {"query": query}
-            headers = {"Content-Type": "application/json"}
-            
+            headers = _context7_headers()
+
             response = await client.get(url, params=params, headers=headers, timeout=30.0)
+
+            if response.status_code == 401:
+                return (
+                    "Error: Unauthorized. Configure your Context7 API key via the CONTEXT7_API_KEY environment variable "
+                    "or run `context-s setup`."
+                )
+
+            if response.status_code == 429:
+                return "Error: Rate limited due to too many requests. Please try again later."
+
             response.raise_for_status()
-            
+
             data = response.json()
             
             # Context7 API returns results in {"results": [...]} format
@@ -387,25 +416,37 @@ async def _fetch_library_docs(library_id: str, version: Optional[str]) -> tuple[
         if version:
             url_path = f"{url_path}/{version}"
         
-        url = f"{CONTEXT7_BASE_URL}/{url_path}"
+        url = f"{CONTEXT7_API_BASE_URL}/v1/{url_path}"
         
         # Build query parameters
         params = {
             "type": "txt",
             "tokens": 100000
         }
-        
-        
-        headers = {
-            "Content-Type": "application/json",
-            "X-Context7-Source": "mcp-server"
-        }
-        
+
+        headers = _context7_headers()
+
         # Fetch documentation from Context7
         async with httpx.AsyncClient() as client:
             response = await client.get(url, params=params, headers=headers, timeout=60.0)
+
+            if response.status_code == 401:
+                return (
+                    "",
+                    (
+                        f"Error fetching docs for '{library_id}': Unauthorized. "
+                        "Configure your Context7 API key via the CONTEXT7_API_KEY environment variable or run `context-s setup`."
+                    ),
+                )
+
+            if response.status_code == 429:
+                return (
+                    "",
+                    f"Error fetching docs for '{library_id}': Rate limited due to too many requests. Please try again later.",
+                )
+
             response.raise_for_status()
-            
+
             return response.text, None
             
     except httpx.HTTPStatusError as e:
