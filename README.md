@@ -170,6 +170,24 @@ Add to your MCP configuration:
 }
 ```
 
+#### For Codex CLI
+
+1. Install Codex if you have not already:
+   - `npm install -g @openai/codex`
+   - or `brew install codex`
+2. Open (or create) `~/.codex/config.toml` and add a new entry under the top-level `mcp_servers` table:
+
+   ```toml
+   [mcp_servers.contexts]
+   command = "python3"
+   args = ["/path/to/ContextS/main.py"]
+   env = { GEMINI_API_KEY = "your-gemini-api-key-here", OPENAI_API_KEY = "your-openai-api-key-here", ANTHROPIC_API_KEY = "your-anthropic-api-key-here" }
+   ```
+
+   > **Note:** Codex uses TOML configuration. The key must be `mcp_servers` (snake_case), and you only need to provide the API keys you have available.
+
+3. Launch Codex (`codex`) and verify that the `contexts` MCP server appears in the available tools list.
+
 #### For Other MCP Clients
 
 Follow your client's MCP server configuration documentation, using:
