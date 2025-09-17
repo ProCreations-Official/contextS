@@ -105,6 +105,21 @@ export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
 
 **Note**: ContextS requires at least one AI API key to function. The server will not start without AI capabilities.
 
+### Optional: Configure Context7 API Access
+
+ContextS now supports Context7's authenticated API for improved stability and higher rate limits. Providing a Context7 API key is optional but recommended if you regularly hit the public request limits.
+
+1. Visit the [Context7 dashboard](https://context7.com/dashboard) to create an API key.
+2. Run the CLI helper to store the key securely (or set it via environment variable):
+
+```bash
+./context-s setup
+# or
+export CONTEXT7_API_KEY="your-context7-api-key"
+```
+
+The CLI stores configuration in `~/.context-s/config.json` (override with `CONTEXT_S_HOME`). Run `./context-s help` or simply `./context-s` to see a setup dashboard.
+
 ### Step 3: Configure Your MCP Client
 
 #### For Claude Desktop

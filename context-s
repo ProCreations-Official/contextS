@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+"""Convenience wrapper for the ContextS CLI."""
+
+from context_s.cli import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())
